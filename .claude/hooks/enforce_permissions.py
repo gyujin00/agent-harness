@@ -44,7 +44,7 @@ POLICY: dict[str, dict[str, list[str]]] = {
         "write_allow": ["frontend/"],
         "read_allow": ["frontend/", "openapi.yaml", "plans/", "docs/"],
     },
-    "rag-worker": {
+    "ai-worker": {
         "write_allow": ["ai/", "ai/prompts/"],
         "read_allow": ["ai/", "eval/", "plans/", "docs/"],
     },
@@ -54,7 +54,7 @@ POLICY: dict[str, dict[str, list[str]]] = {
     },
 }
 
-WORKER_NAMES = {"backend-worker", "frontend-worker", "rag-worker"}
+WORKER_NAMES = {"backend-worker", "frontend-worker", "ai-worker"}
 
 # ── harness/permissions.policy.md "명령 권한" 미러 ─────────────────────────
 DESTRUCTIVE_PATTERNS = [  # 전 Agent 공통 차단 (메인 세션 포함)

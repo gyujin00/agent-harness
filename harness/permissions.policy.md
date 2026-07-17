@@ -18,7 +18,7 @@ hook(`.claude/hooks/`)이 이 정책을 읽어 PreToolUse 단계에서 강제한
 | orchestrator | `plans/`, `docs/agent-control-log.md` | 전체 | 코드 직접 수정(`backend/`,`frontend/`,`ai/`) |
 | backend-worker | `backend/`, `openapi.yaml` | `backend/`, `plans/`, `loops/`, `docs/` | `frontend/`, `ai/`, `eval/`, `plans/` 쓰기 |
 | frontend-worker | `frontend/` | `frontend/`, `openapi.yaml`, `plans/`, `docs/` | `backend/`, `ai/`, `eval/`, `plans/` 쓰기 |
-| rag-worker | `ai/`, `ai/prompts/` | `ai/`, `eval/`, `plans/`, `docs/` | `backend/`, `frontend/`, `plans/` 쓰기 |
+| ai-worker | `ai/`, `ai/prompts/` | `ai/`, `eval/`, `plans/`, `docs/` | `backend/`, `frontend/`, `plans/` 쓰기 |
 | verifier | `docs/harness-log.md`, `docs/traceability.md` | 전체 | 코드 수정 |
 
 주: orchestrator는 코드는 못 만지지만 계획 문서(`plans/`)와 통제 로그는 쓴다(일감 관리가 본업).

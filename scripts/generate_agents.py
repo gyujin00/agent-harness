@@ -35,7 +35,7 @@ TOOLS_MAP: dict[str, list[str]] = {
     "orchestrator": ["Read", "Grep", "Glob", "Bash", "Task"],
     "backend-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
     "frontend-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
-    "rag-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
+    "ai-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
     "verifier": ["Read", "Grep", "Glob", "Bash", "Write"],
 }
 
