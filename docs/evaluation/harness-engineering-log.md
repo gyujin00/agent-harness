@@ -14,6 +14,7 @@
 | 권한 가드레일 | 도메인 밖 쓰기/읽기·배포·파괴 명령 차단 | PreToolUse hook(deny) | ADR-002 |
 | 컨텍스트 스코프 | 정책을 필요할 때만 로드 | .claude/rules + paths frontmatter | ADR-003 |
 | 검증 분리 | work ≠ verify | 별도 verifier + verification.policy.md | (기존 설계) |
+| 실행 통제 | 선언형 loop를 실제 상태 머신으로 실행 | `harness_runtime/` + 구조화 schema + bounded retry | cross-agent runtime 설계 |
 
 ## 검증 루프 설계
 
@@ -54,9 +55,21 @@ permissions.policy는 orchestrator write를 비워둔 모순을 발견했다. pl
 현업 이사님의 11개 번호폴더는 매력적이었으나 문서화 중심 SI 구조라 우리 실행 하네스와 철학이 달랐다.
 전면 재구조화 대신 알맹이 4개(계획 계층·문서 검증·추적성·현재 상태)만 흡수해 리스크를 낮췄다. (→ ADR-004)
 
+### 시도 5 — loop 선언만으로는 무인화가 아님 → 공급자 중립 실행기로 승격
+
+`loops/*.loop.yaml`에 `action→verify→record`를 적었지만 실제 Agent 호출·재시도·상태 기록은 사람이
+수행하고 있었다. 이를 무인화라고 발표하면 과장이므로, Task frontmatter를 기계 계약으로 읽는
+`harness_runtime/`을 만들었다. Claude Code와 Codex 전용 흐름을 복제하지 않고 공용 상태 머신에 얇은
+provider 어댑터만 연결했다. evaluator·정책 변경은 worker 성공 경로에서 제외하고, verifier를 새
+프로세스/read-only로 분리했으며, 최대 시도·Claude 비용·시간을 런타임 값으로 강제했다.
+
+실제 모델 비용 없이 fake provider로 `FAIL→back_to_action→PASS→record`를 회귀 테스트하고,
+Claude worker/Codex verifier 및 반대 조합은 dry-run으로 명령·컨텍스트·권한을 확인한다. 실제 유료
+smoke run은 아직 수행하지 않았으며 별도 `todo` Task의 증거로 남겨야 한다.
+
 ## 다음 고도화 후보 (v2)
 
 - permissions.policy.md 표를 hook이 자동 파싱하도록 승격(손 미러 제거 → 드리프트 원천 차단).
 - Bash 명령 가드레일을 allowlist 방식으로 강화.
-- eval/run-eval.py 스코어러를 실제 ai/ 파이프라인에 연결해 verify 루프를 실증.
-- 첫 Sprint→Task→loop→verify→record 1회전을 돌려 전체 하네스를 end-to-end 검증.
+- 새 `todo` Task로 실제 Claude/Codex 교차 provider smoke run을 수행해 `docs/runs/` 증거를 남긴다.
+- 스케줄·CI signal 기반 Ops loop는 단일 Goal loop의 실제 운용 증거 후 확장한다.

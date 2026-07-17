@@ -21,7 +21,7 @@ from .providers.base import (
 )
 from .recorder import RunRecorder
 from .state import RunStatus, next_status
-from .worktree import Worktree, WorktreeManager
+from .worktree import Worktree, WorktreeError, WorktreeManager
 
 
 GateRunner = Callable[
@@ -36,6 +36,15 @@ class WorkspaceManager(Protocol):
     def changed_files(self, worktree: Worktree) -> tuple[str, ...]: ...
 
     def diff_summary(self, worktree: Worktree) -> str: ...
+
+
+class PullRequestService(Protocol):
+    def create_draft(
+        self,
+        worktree: Worktree,
+        contract: TaskContract,
+        evidence_dir: Path,
+    ) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -101,12 +110,18 @@ class LoopRunner:
         *,
         workspace_manager: WorkspaceManager | None = None,
         gate_runner: GateRunner = run_gates,
+        worker_budget_usd: float | None = None,
+        verifier_budget_usd: float | None = None,
+        pull_request_manager: PullRequestService | None = None,
     ) -> None:
         self.root = root.resolve()
         self.worker_provider = worker_provider
         self.verifier_provider = verifier_provider
         self.workspace_manager = workspace_manager or WorktreeManager(self.root)
         self.gate_runner = gate_runner
+        self.worker_budget_usd = worker_budget_usd
+        self.verifier_budget_usd = verifier_budget_usd
+        self.pull_request_manager = pull_request_manager
 
     @staticmethod
     def _advance(
@@ -153,6 +168,11 @@ class LoopRunner:
             output_schema=worktree.path / "harness" / "schemas" / schema_name,
             raw_output_dir=recorder.local_dir / f"attempt-{attempt}" / role.value,
             timeout_seconds=contract.timeout_minutes * 60,
+            budget_usd=(
+                self.worker_budget_usd
+                if role is AgentRole.WORKER
+                else self.verifier_budget_usd
+            ),
         )
 
     def _retry_or_escalate(
@@ -242,7 +262,34 @@ class LoopRunner:
         run_id: str | None = None,
     ) -> RunOutcome:
         run_id = run_id or _new_run_id()
-        worktree = self.workspace_manager.create(contract, run_id)
+        try:
+            worktree = self.workspace_manager.create(contract, run_id)
+        except WorktreeError as exc:
+            worktree = Worktree(
+                path=self.root,
+                branch="",
+                base_sha="",
+                created=False,
+            )
+            recorder = RunRecorder(
+                local_root=self.root / ".harness" / "runs",
+                evidence_root=self.root / ".harness" / "evidence",
+                run_id=run_id,
+            )
+            status = self._advance(
+                RunStatus.QUEUED,
+                RunStatus.BLOCKED,
+                recorder,
+                "harness",
+                {"reason": "worktree_create_failed", "evidence": [str(exc)]},
+            )
+            return RunOutcome(
+                run_id=run_id,
+                status=status,
+                attempts=0,
+                evidence_dir=recorder.evidence_dir,
+                worktree=worktree,
+            )
         recorder = RunRecorder(
             local_root=self.root / ".harness" / "runs",
             evidence_root=worktree.path / "docs" / "runs",
@@ -271,6 +318,7 @@ class LoopRunner:
         attempts = 0
         last_pack: ContextPack | None = None
         verifier_result: AgentResult | None = None
+        pr_url: str | None = None
 
         while attempts < active_contract.max_attempts:
             attempts += 1
@@ -349,6 +397,28 @@ class LoopRunner:
                 {"attempt": attempts},
             )
             changed = self.workspace_manager.changed_files(worktree)
+            if not changed:
+                feedback = (
+                    {
+                        "gate": "artifact",
+                        "evidence": ["no changed artifact was produced"],
+                        "required_correction": (
+                            "Produce a concrete change inside editable_paths; "
+                            "a status report does not count."
+                        ),
+                        "files": [],
+                    },
+                )
+                status = self._retry_or_escalate(
+                    status=status,
+                    recorder=recorder,
+                    attempt=attempts,
+                    contract=active_contract,
+                    feedback=feedback,
+                )
+                if status is RunStatus.NEEDS_HUMAN:
+                    break
+                continue
             try:
                 validate_changed_paths(changed, active_contract)
             except LockedSurfaceViolation as exc:
@@ -490,13 +560,49 @@ class LoopRunner:
                 attempts,
                 worktree,
             )
-            status = self._advance(
-                status,
-                RunStatus.COMPLETE,
-                recorder,
-                "orchestrator",
-                {"reason": "verified_without_pr"},
-            )
+            if create_pr:
+                if self.pull_request_manager is None:
+                    status = self._advance(
+                        status,
+                        RunStatus.NEEDS_HUMAN,
+                        recorder,
+                        "orchestrator",
+                        {"reason": "draft_pr_manager_not_configured"},
+                    )
+                    break
+                try:
+                    pr_url = self.pull_request_manager.create_draft(
+                        worktree,
+                        active_contract,
+                        recorder.evidence_dir,
+                    )
+                except Exception as exc:
+                    status = self._advance(
+                        status,
+                        RunStatus.NEEDS_HUMAN,
+                        recorder,
+                        "orchestrator",
+                        {
+                            "reason": "draft_pr_creation_failed",
+                            "evidence": [str(exc)],
+                        },
+                    )
+                    break
+                status = self._advance(
+                    status,
+                    RunStatus.PR_READY,
+                    recorder,
+                    "orchestrator",
+                    {"pr_url": pr_url, "merge": "human_only"},
+                )
+            else:
+                status = self._advance(
+                    status,
+                    RunStatus.COMPLETE,
+                    recorder,
+                    "orchestrator",
+                    {"reason": "verified_without_pr"},
+                )
             break
 
         return RunOutcome(
@@ -505,5 +611,5 @@ class LoopRunner:
             attempts=attempts,
             evidence_dir=recorder.evidence_dir,
             worktree=worktree,
+            pr_url=pr_url,
         )
-

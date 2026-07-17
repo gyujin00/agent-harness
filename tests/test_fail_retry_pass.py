@@ -10,7 +10,7 @@ from harness_runtime.orchestrator import LoopRunner
 from harness_runtime.providers.base import AgentIssue, AgentResult, AgentRole
 from harness_runtime.providers.fake import FakeProvider
 from harness_runtime.state import RunStatus
-from harness_runtime.worktree import Worktree
+from harness_runtime.worktree import Worktree, WorktreeError
 
 from test_contracts import VALID_TASK, write_project
 
@@ -33,6 +33,11 @@ class FakeWorkspaceManager:
 
     def diff_summary(self, worktree: Worktree) -> str:
         return "\n".join(f"M {path}" for path in self.changed)
+
+
+class FailingWorkspaceManager:
+    def create(self, contract: TaskContract, run_id: str) -> Worktree:
+        raise WorktreeError("cannot create isolated worktree")
 
 
 def passing_gates(commands, cwd, timeout_seconds):
@@ -60,6 +65,27 @@ def prepare_runtime_project(
         "백엔드 계약을 구현한다. 기준은 `requirements/prd.md`다.",
     )
     task = write_project(tmp_path, task_text)
+    (tmp_path / "loops" / "backend.loop.yaml").write_text(
+        """\
+target:
+  paths: [backend/]
+trigger:
+  - type: human.goal
+    detail: test
+action:
+  agent: backend-worker
+  worktree: true
+verify:
+  gates: [configured-in-task-contract]
+  verifier: verifier
+  on_fail: back_to_action
+record:
+  outputs: [PR]
+  memory: [docs/harness-log.md]
+  required: true
+""",
+        encoding="utf-8",
+    )
     (tmp_path / "AGENTS.md").write_text("# Constitution\n", encoding="utf-8")
     (tmp_path / "agent-specs").mkdir()
     (tmp_path / "agent-specs" / "backend-worker.spec.md").write_text(
@@ -84,6 +110,15 @@ def prepare_runtime_project(
         )
     (tmp_path / "requirements").mkdir()
     (tmp_path / "requirements" / "prd.md").write_text("# PRD\n", encoding="utf-8")
+    (tmp_path / "prompts").mkdir()
+    (tmp_path / "prompts" / "worker-launch.md").write_text(
+        "WORKER LAUNCH CONTRACT\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "prompts" / "verifier-launch.md").write_text(
+        "VERIFIER LAUNCH CONTRACT\n",
+        encoding="utf-8",
+    )
     return load_task_contract(task, tmp_path), task
 
 
@@ -211,3 +246,85 @@ def test_worker_needs_human_stops_before_verification(tmp_path: Path) -> None:
 
     assert outcome.status is RunStatus.NEEDS_HUMAN
     assert len(verifier.requests) == 0
+
+
+def test_worker_pass_without_artifact_does_not_count(tmp_path: Path) -> None:
+    contract, _ = prepare_runtime_project(tmp_path, max_attempts=1)
+    worker = FakeProvider([AgentResult.pass_("status report only")])
+    verifier = FakeProvider([AgentResult.pass_("must not run")])
+
+    outcome = runner(
+        tmp_path,
+        worker,
+        verifier,
+        changed=(),
+    ).run(
+        contract,
+        create_pr=False,
+        run_id="run-no-artifact",
+    )
+
+    assert outcome.status is RunStatus.NEEDS_HUMAN
+    assert len(verifier.requests) == 0
+    events = (
+        tmp_path / "docs" / "runs" / outcome.run_id / "events.jsonl"
+    ).read_text(encoding="utf-8")
+    assert "no changed artifact" in events
+
+
+def test_worktree_failure_returns_recorded_blocked_outcome(tmp_path: Path) -> None:
+    contract, _ = prepare_runtime_project(tmp_path)
+    loop = LoopRunner(
+        root=tmp_path,
+        worker_provider=FakeProvider([AgentResult.pass_("must not run")]),
+        verifier_provider=FakeProvider([AgentResult.pass_("must not run")]),
+        workspace_manager=FailingWorkspaceManager(),
+        gate_runner=passing_gates,
+    )
+
+    outcome = loop.run(
+        contract,
+        create_pr=False,
+        run_id="run-worktree-blocked",
+    )
+
+    assert outcome.status is RunStatus.BLOCKED
+    assert outcome.attempts == 0
+    assert outcome.evidence_dir.is_relative_to(tmp_path / ".harness")
+
+
+class FakePullRequestManager:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def create_draft(
+        self,
+        worktree: Worktree,
+        contract: TaskContract,
+        evidence_dir: Path,
+    ) -> str:
+        self.calls += 1
+        return "https://github.com/example/repo/pull/9"
+
+
+def test_verified_loop_can_finish_at_pr_ready(tmp_path: Path) -> None:
+    contract, _ = prepare_runtime_project(tmp_path)
+    pr_manager = FakePullRequestManager()
+    loop = LoopRunner(
+        root=tmp_path,
+        worker_provider=FakeProvider([AgentResult.pass_("implemented")]),
+        verifier_provider=FakeProvider([AgentResult.pass_("verified")]),
+        workspace_manager=FakeWorkspaceManager(tmp_path),
+        gate_runner=passing_gates,
+        pull_request_manager=pr_manager,
+    )
+
+    outcome = loop.run(
+        contract,
+        create_pr=True,
+        run_id="run-pr-ready",
+    )
+
+    assert outcome.status is RunStatus.PR_READY
+    assert outcome.pr_url == "https://github.com/example/repo/pull/9"
+    assert pr_manager.calls == 1

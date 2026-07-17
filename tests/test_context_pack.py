@@ -34,6 +34,15 @@ def prepare_context_project(tmp_path: Path) -> Path:
         (tmp_path / "harness" / name).write_text(f"# {name}\n", encoding="utf-8")
     (tmp_path / "requirements").mkdir()
     (tmp_path / "requirements" / "prd.md").write_text("# PRD\n", encoding="utf-8")
+    (tmp_path / "prompts").mkdir()
+    (tmp_path / "prompts" / "worker-launch.md").write_text(
+        "WORKER LAUNCH CONTRACT\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "prompts" / "verifier-launch.md").write_text(
+        "VERIFIER LAUNCH CONTRACT\n",
+        encoding="utf-8",
+    )
     (tmp_path / "unrelated.txt").write_text("do not include\n", encoding="utf-8")
     return task
 
@@ -55,6 +64,8 @@ def test_context_pack_contains_only_governed_relevant_files(tmp_path: Path) -> N
         "harness/worktree.md",
         "loops/backend.loop.yaml",
         "plans/task-002.md",
+        "prompts/verifier-launch.md",
+        "prompts/worker-launch.md",
         "requirements/prd.md",
     }
     assert "unrelated.txt" not in relative_files
@@ -83,3 +94,16 @@ def test_context_pack_includes_only_latest_structured_feedback(tmp_path: Path) -
     assert "return 409" in rendered
     assert "unrelated.txt" not in rendered
 
+
+def test_context_pack_selects_only_the_requested_role_prompt(tmp_path: Path) -> None:
+    task = prepare_context_project(tmp_path)
+    contract = load_task_contract(task, tmp_path)
+    pack = build_context_pack(tmp_path, contract)
+
+    worker = pack.render("worker")
+    verifier = pack.render("verifier")
+
+    assert "WORKER LAUNCH CONTRACT" in worker
+    assert "VERIFIER LAUNCH CONTRACT" not in worker
+    assert "VERIFIER LAUNCH CONTRACT" in verifier
+    assert "WORKER LAUNCH CONTRACT" not in verifier

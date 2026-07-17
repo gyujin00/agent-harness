@@ -69,3 +69,20 @@
 - 결과 판단: (진행 중) 각 산출물이 PDF 평가 항목과 1:1 매핑되는지 `evaluation-map.md`로 확인.
 - 교정: (해당 시 추가)
 - 산출물: 이 문서, `harness-engineering-log.md`, `docs/decisions/ADR-001~005`, `evaluation-map.md`.
+
+## [2026-07-17] 회차 6 — Claude Code·Codex 공용 실행 런타임
+
+- 목표: 사람이 Task 하나를 지정하면 격리 worker→독립 verifier→재작업→record→Draft PR까지 실행하는
+  공용 프로젝트 폴더를 만든다.
+- 맥락: 제품 완성도보다 AI가 의도대로 구현하도록 만든 하네스·프롬프트·컨텍스트·루프 엔지니어링
+  과정이 과제의 핵심이라는 사용자 재정의.
+- 제약: work≠verify, evaluator/정책/Task 잠금, 격리 worktree, bounded retry, Claude 비용·시간 제한,
+  merge/deploy는 개발자만 수행, 실제 유료 모델 호출은 이번 구현 검증에서 제외.
+- 주요 지시: `AGENTS.md`를 공용 헌법으로 유지하고 Claude/Codex 차이는 얇은 provider 어댑터로
+  격리하라. 상태 보고가 아니라 구조화 결과와 실행 증거를 요구하라.
+- 결과 판단: 계약·상태·경로 정책·shell-free gate·provider 명령·fake FAIL→retry→PASS·Draft PR
+  경계를 자동 테스트로 검증하고 양방향 dry-run을 실행한다.
+- 교정: 초기 설계 자체 검토에서 launch prompt가 Python 문자열에만 있는 문제를 발견해
+  `prompts/worker-launch.md`, `prompts/verifier-launch.md` 단일 파일 표면으로 분리했다.
+- 산출물: `harness_runtime/`, `harness/schemas/`, `harness/runtime.yaml`, `prompts/`, `tests/`,
+  cross-agent runtime 설계·구현 계획.

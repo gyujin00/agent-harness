@@ -34,7 +34,9 @@ class ContextPack:
     def render(self, role: str) -> str:
         if role not in {"worker", "verifier"}:
             raise ValueError(f"unsupported context role: {role}")
+        launch_prompt = self.root / "prompts" / f"{role}-launch.md"
         sections = [
+            launch_prompt.read_text(encoding="utf-8").strip(),
             f"ROLE: {role}",
             f"TASK: {self.contract.id}",
             "Follow the project constitution and Task Contract. "
@@ -55,6 +57,11 @@ class ContextPack:
         sections.append("CONTEXT_FILES:")
         for path in self.files:
             relative = path.relative_to(self.root).as_posix()
+            if relative in {
+                "prompts/worker-launch.md",
+                "prompts/verifier-launch.md",
+            }:
+                continue
             sections.append(f"\n--- {relative} ---\n{path.read_text(encoding='utf-8')}")
         return "\n".join(sections)
 
@@ -70,6 +77,8 @@ def _required_paths(root: Path, contract: TaskContract) -> tuple[Path, ...]:
         root / "harness" / "worktree.md",
         root / "harness" / "verification.policy.md",
         root / "harness" / "connectors.md",
+        root / "prompts" / "worker-launch.md",
+        root / "prompts" / "verifier-launch.md",
     )
 
 
@@ -113,4 +122,3 @@ def build_context_pack(
         manifest=manifest,
         feedback=tuple(feedback),
     )
-

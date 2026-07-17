@@ -1,10 +1,32 @@
+---
+id: T-001
+sprint: sprint-01
+domain: ai
+loop: loops/ai.loop.yaml
+status: done
+worker: ai-worker
+max_attempts: 3
+timeout_minutes: 30
+editable_paths:
+  - ai/
+locked_paths:
+  - eval/
+  - harness/
+  - plans/
+  - requirements/
+  - AGENTS.md
+  - CLAUDE.md
+verification_commands:
+  - python -X utf8 eval/run-eval.py
+pr:
+  enabled: true
+  draft: true
+---
+
 # Task-001: FAQ RAG 파이프라인 구현 + corpus 구축 (FR-017)
 
-- Sprint: sprint-01
-- 도메인: ai
-- 실행 loop: loops/ai.loop.yaml
-- 상태: done
-- worker: ai-worker (permissions.policy.md 범위 내: `ai/`, `ai/prompts/` 쓰기)
+> 이 Task는 이미 완료됐다. frontmatter는 과거 작업을 재실행하기 위한 승인이 아니라
+> `harnessctl validate`와 양방향 dry-run으로 계약 호환성을 검증하기 위한 기계 판독 스냅샷이다.
 
 ## 목적
 Sprint-01 목표(FAQ/RAG 1회전 실증)를 달성하기 위한 실제 구현 Task. FR-017("평가 기준에 대한 문의에

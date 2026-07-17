@@ -18,23 +18,26 @@
 - [x] 권한 정책 `harness/permissions.policy.md` + PreToolUse hook 강제
 - [x] worktree 격리 정책, connector 정의
 - [x] 검증 기준 단일 원본 `harness/verification.policy.md` (코드 + 문서 산출물)
-- [x] eval 하네스 골격 `eval/` (run_pipeline 연결은 미완 — 실제 ai/ 파이프라인 대기)
+- [x] eval 하네스 `eval/` + FR-017 실제 RAG 파이프라인 연결
 - [x] agent-specs → `.claude/agents/` 생성 스크립트
+- [x] Claude Code·Codex 공용 `harness_runtime/` (계약·상태·권한·provider·기록·Draft PR)
+- [x] 공용 worker/verifier launch brief `prompts/` + 구조화 출력 schema `harness/schemas/`
 
 ## 실행 계층 (계획·루프)
-- [x] `loops/{backend,frontend,rag}.loop.yaml` + `_loop.schema.yaml`
-- [x] Sprint/Task 계획 `plans/` (인덱스 + 템플릿) — 실제 Sprint/Task는 아직 없음
+- [x] `loops/{backend,frontend,ai}.loop.yaml` + `_loop.schema.yaml`
+- [x] Sprint/Task 계획 `plans/` (Sprint-01·T-001 완료, frontmatter 실행 계약)
 - [x] 요구사항 임포트 `requirements/prd.md`, `requirements/frd.md` (Na-Vendor 재활용, ADR-006)
-- [ ] 첫 Sprint 정의 및 Task 점진 생성 — 후보: FR-017(FAQ/RAG), AI 워크스트림 a→b→c 사이클 실증
+- [x] `FAIL→back_to_action→PASS→record` fake provider 자동 회귀 + Claude↔Codex 양방향 dry-run
 
 ## 기록(memory/state)
 - [x] `docs/harness-log.md`(이력), `docs/agent-control-log.md`(통제 이벤트)
 - [x] `docs/traceability.md`(추적성), `docs/project-state.md`(현재 문서)
-- [x] `docs/decisions/` ADR 템플릿(대안·시행착오 필드 보강) — **Accepted ADR 5건**(ADR-001~005)
+- [x] `docs/decisions/` ADR 템플릿과 실제 결정 기록
+- [x] 런타임 정제 증거 구조 `docs/runs/{run-id}/` + 로컬 원시 기록 `.harness/runs/`
 
 ## 평가 산출물 (과제 PDF §6) — 3종 착수
-- [x] ① Agent 통제 기록 `docs/evaluation/agent-control-journal.md`(회차 5건 서술)
-- [x] ② 하네스 엔지니어링 기록 `docs/evaluation/harness-engineering-log.md`(설계 근거·시행착오 4건)
+- [x] ① Agent 통제 기록 `docs/evaluation/agent-control-journal.md`
+- [x] ② 하네스 엔지니어링 기록 `docs/evaluation/harness-engineering-log.md`
 - [x] ③ 의사결정 문서 `docs/decisions/ADR-001~005` + `adr-index.md`
 - [x] 평가기준↔산출물 매핑 `docs/evaluation/evaluation-map.md`(발표용)
 
@@ -43,10 +46,9 @@
 - [x] 도메인 폴더 `backend/ frontend/ ai/ ai/prompts/` (README 스켈레톤)
 
 ## 남은 큰 일 (HANDOFF "다음 작업" + 2차 미팅)
-- [ ] `eval/run-eval.py` 파이프라인/스코어러 실제 연결 (실제 ai/ 구현 시, 실제 OpenAI API 호출)
-- [ ] `eval/rag-eval-set.jsonl` 실제 도메인 문항 교체 (`requirements/frd.md` FR-017/BR-007/BR-009 기준)
-- [x] 첫 Sprint→Task→loop→verify→record 1회전 실증 (FR-017 후보) — Sprint-01 정의 완료, 실제
-  구현(T-001)은 아직 미착수
+- [x] `eval/run-eval.py`와 실제 RAG 파이프라인 연결, 도메인 eval-set 교체, T-001 완료
+- [x] 선언형 loop를 실행하는 provider-neutral 런타임과 66개 자동 테스트
+- [ ] 새 `todo` Task에서 실제 Claude/Codex 교차 provider 유료 smoke run 1회
 - [x] `rag-worker` → `ai-worker` 일반화 + `/intake` 부트스트랩 커맨드 신설
   (`docs/superpowers/specs/2026-07-17-generic-harness-intake-design.md`)
 - [ ] FRD OQ-007~010(자연어 매핑·요약 규칙·등급조정 키워드·FAQ 폴백) — ADR-proposed 발의 후 Human PM 확인 대기

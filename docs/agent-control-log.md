@@ -19,3 +19,6 @@ event: DELEGATE | BLOCK | RETRY | ESCALATE
 [2026-07-17 15:05] BLOCK · general-purpose · destructive command blocked: 'cd "C:\\dev\\agent-harness\\.worktrees\\ai-T-001" && cat .env 2>/dev/null | grep -o "OPENAI_API_KEY=sk-" ; echo "---"; ls -la ai/corpus/ 2>/dev/null; python -c "import openai, numpy, yaml; print(\'deps ok\')" 2>&1'
 [2026-07-17 15:27] BLOCK · general-purpose · destructive command blocked: 'cd "C:\\dev\\agent-harness" && cat .env 2>/dev/null | sed \'s/=.*/=<redacted>/\''
 [2026-07-17 16:06] BLOCK · main · destructive command blocked: 'cd "C:\\dev\\agent-harness" && git show --stat HEAD\necho "--- has this been pushed? ---"\ngit log origin/main..HEAD --oneline 2>&1\necho "--- .env content (checking for secrets before deciding action) ---"\ncat .env'
+[2026-07-17 20:10] DELEGATE · codex/orchestrator · cross-agent runtime 설계 승인 → 격리 worktree codex/harness-cross-agent-runtime
+[2026-07-17 20:24] RETRY · harness-runtime/fake-verifier · api-contract FAIL → 구조화 피드백 → back_to_action → PASS 회귀 테스트
+[2026-07-17 20:31] BLOCK · harness-runtime · locked surface eval/thresholds.yaml 변경 → needs_human 회귀 테스트

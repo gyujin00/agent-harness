@@ -19,6 +19,9 @@ dist/
 # Worktrees (harness/worktree.md — 일회성 작업 격리, 커밋 대상 아님)
 .worktrees/
 
+# Harness raw runs — CLI stdout/stderr와 재개용 로컬 상태, 커밋 금지
+.harness/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -237,3 +237,27 @@
 - 다음 루프에 넘길 컨텍스트: 없음. 도메인 폴더 구조(backend/frontend/ai 3분할) 자체를 더 정리하고
   싶다면 별도 브레인스토밍이 필요(이번 범위 아님, `docs/superpowers/specs/2026-07-17-folder-readability-design.md`
   "정직한 한계" 절 참고).
+
+## [2026-07-17] harness · cross-agent-runtime · goal_loop
+
+- action: 선언에 머물던 `loops/*.loop.yaml`을 실제로 실행하는 provider-neutral Python 런타임을
+  `harness_runtime/`에 구현. `plans/task-XXX.md` YAML frontmatter를 Task Contract로 읽고 격리
+  worktree→worker→잠긴 결정적 gate→fresh-context verifier→bounded retry→정제 증거→선택적 Draft
+  PR 상태 전이를 수행한다. Claude Code/Codex 차이는 provider 어댑터에만 두고, 공용 launch brief는
+  `prompts/`, 구조화 출력 계약은 `harness/schemas/`, 비용 설정은 `harness/runtime.yaml`에 분리했다.
+- verify:
+  1) `python -m pytest -q` — 66 passed. 계약/상태/append-only 기록/비밀값 redaction/컨텍스트
+     최소화/locked path/shell-free gate/Claude·Codex 명령/fake FAIL→retry→PASS/retry 초과/
+     빈 산출물 차단/Draft PR-only/실제 임시 Git worktree 생성까지 포함.
+  2) `python -m compileall -q harness_runtime tests` — exit 0.
+  3) `python -m harness_runtime doctor` — git·claude·codex·gh 모두 발견, model calls 0.
+  4) `python -m harness_runtime validate plans/task-001.md` — T-001(ai, done) 계약·loop·컨텍스트 PASS.
+  5) Claude worker→Codex read-only verifier, Codex workspace-write worker→Claude 제한 도구 verifier
+     양방향 `--dry-run` — 각각 exit 0, worktree 생성 0, model calls 0, Claude 예산 5/2 USD 표시.
+  6) 실제 Git 통합 테스트에서 최초 `.worktrees/` 디렉터리가 없을 때 ignore 검사가 오탐 차단하는
+     결함을 발견. `.worktrees` 자체 대신 `.worktrees/probe` 패턴을 검사하도록 고쳐 재실행 PASS.
+- record: 설계·구현 계획과 런타임 코드·테스트·평가 문서를 전용 브랜치
+  `codex/harness-cross-agent-runtime`에 단계별 커밋. merge/deploy 기능은 없고 Draft PR 생성까지만 제공.
+- 다음 루프에 넘길 컨텍스트: 유료/인증이 필요한 실제 모델 호출은 이번 검증에서 하지 않았다. 새
+  `todo` Task를 승인한 뒤 Claude↔Codex 중 한 조합으로 실제 run을 1회 수행해 `docs/runs/{run-id}/`
+  증거와 Draft PR을 남기는 것이 다음 실증 단계다.

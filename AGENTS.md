@@ -56,6 +56,23 @@ Sprint/Task가 인용하는 요구사항 ID(REQ-*/FR-*)의 기준 문서는 `req
 
 파일: `plans/sprint-index.md`, `plans/task-index.md`, `plans/_sprint.template.md`, `plans/_task.template.md`.
 
+## 3.6 실행 런타임 (Claude Code·Codex 공용)
+
+`harness_runtime/`이 `plans/task-XXX.md`의 YAML frontmatter를 기계 실행 계약으로 읽는다. Claude
+Code와 Codex는 같은 헌법·역할 spec·loop·검증 정책·launch brief를 사용하고, 공급자별 차이는
+`harness_runtime/providers/`에만 둔다.
+
+- 상태 전이: `queued→preparing→in_progress→in_verify→recording→complete|pr_ready`.
+  검증 실패는 `in_verify→back_to_action→in_progress`, 횟수 초과·정책 결정 필요는 `needs_human`.
+- worker/verifier는 별도 CLI 프로세스·새 세션이다. verifier는 read-only이며 worker의 사고 과정이나
+  자기평가를 통과 근거로 받지 않는다.
+- `eval/`, `harness/`, `plans/` 등 Task의 `locked_paths` 변경은 자동 성공할 수 없다.
+- 원시 출력은 Git 비추적 `.harness/runs/`, 정제 증거는 `docs/runs/{run-id}/`에 append-only로 남긴다.
+- 실제 모델 호출 전 `doctor→validate→run --dry-run`을 거친다. dry-run은 worktree와 모델 호출을
+  만들지 않는다.
+- `--create-pr`은 검증 통과 후 commit·push·**Draft PR 생성까지만** 허용한다. merge·deploy는
+  런타임 기능이 아니며 개발자가 수행한다.
+
 ## 4. 기록(memory/state) 규약
 
 ### 4.1 실행 기록 (하네스 운영용)

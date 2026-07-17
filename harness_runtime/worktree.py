@@ -62,7 +62,7 @@ class WorktreeManager:
     def create(self, contract: TaskContract, run_id: str) -> Worktree:
         specification = self.spec(contract, run_id)
         ignored = subprocess.run(
-            ("git", "check-ignore", "-q", ".worktrees"),
+            ("git", "check-ignore", "-q", ".worktrees/probe"),
             cwd=self.root,
             capture_output=True,
             text=True,
@@ -121,4 +121,3 @@ class WorktreeManager:
         if untracked:
             sections.append("UNTRACKED:\n" + untracked)
         return "\n\n".join(sections) or "No diff"
-

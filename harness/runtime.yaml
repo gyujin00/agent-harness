@@ -1,0 +1,13 @@
+version: 1
+
+# Claude Code exposes a hard USD budget in non-interactive mode.
+# Codex subscription/API budgeting is controlled outside the CLI, so null means
+# this runtime still enforces Task timeout and max_attempts but adds no fake flag.
+providers:
+  claude:
+    worker_budget_usd: 5.0
+    verifier_budget_usd: 2.0
+  codex:
+    worker_budget_usd: null
+    verifier_budget_usd: null
+
