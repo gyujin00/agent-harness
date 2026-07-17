@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-result.schema.json",
+  "title": "Worker Agent Result",
+  "type": "object",
+  "required": ["status", "summary", "evidence"],
+  "properties": {
+    "status": {"enum": ["pass", "fail", "needs_human"]},
+    "summary": {"type": "string"},
+    "evidence": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "session_id": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}
+

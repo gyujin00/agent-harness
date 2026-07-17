@@ -1,10 +1,30 @@
+---
+id: T-XXX
+sprint: sprint-XX
+domain: backend
+loop: loops/backend.loop.yaml
+status: todo
+worker: backend-worker
+max_attempts: 3
+timeout_minutes: 30
+editable_paths:
+  - backend/
+  - tests/backend/
+locked_paths:
+  - eval/
+  - harness/
+  - plans/
+verification_commands:
+  - python -m pytest tests/backend -q
+pr:
+  enabled: true
+  draft: true
+---
+
 # Task-XXX: {Task 제목}
 
-- Sprint: sprint-XX
-- 도메인: backend | frontend | ai
-- 실행 loop: loops/{domain}.loop.yaml
-- 상태: todo | in_progress | in_verify | done | back_to_action
-- worker: {backend|frontend|rag}-worker (permissions.policy.md 범위 내)
+> frontmatter는 `harness_runtime`이 읽는 실행 계약이다. 실제 도메인에 맞춰 `domain`, `loop`,
+> `worker`, 경로, 검증 명령을 함께 바꾸며, Draft PR만 허용한다.
 
 ## 목적
 왜 이 Task가 필요한가 (어떤 Sprint 목표에 기여하는가).

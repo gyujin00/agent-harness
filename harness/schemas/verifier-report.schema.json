@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verifier-report.schema.json",
+  "title": "Independent Verifier Report",
+  "type": "object",
+  "required": ["status", "summary", "evidence", "issues"],
+  "properties": {
+    "status": {"enum": ["pass", "fail", "needs_human"]},
+    "summary": {"type": "string"},
+    "evidence": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "evidence", "required_correction", "files"],
+        "properties": {
+          "gate": {"type": "string"},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "required_correction": {"type": "string"},
+          "files": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "session_id": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task-contract.schema.json",
+  "title": "Agent Harness Task Contract",
+  "type": "object",
+  "required": [
+    "id",
+    "sprint",
+    "domain",
+    "loop",
+    "status",
+    "worker",
+    "max_attempts",
+    "timeout_minutes",
+    "editable_paths",
+    "locked_paths",
+    "verification_commands",
+    "pr"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^T-[0-9]+$"},
+    "sprint": {"type": "string", "minLength": 1},
+    "domain": {"enum": ["backend", "frontend", "ai"]},
+    "loop": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": ["todo", "in_progress", "in_verify", "done", "back_to_action"]
+    },
+    "worker": {"type": "string", "minLength": 1},
+    "max_attempts": {"type": "integer", "minimum": 1},
+    "timeout_minutes": {"type": "integer", "minimum": 1},
+    "editable_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "locked_paths": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "verification_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "pr": {
+      "type": "object",
+      "required": ["enabled", "draft"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "draft": {"const": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}
+
