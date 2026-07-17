@@ -1,0 +1,23 @@
+{
+  "$comment": "design-tokens.json — frontend 스타일 기준(단일 원본). frontend-worker가 컴포넌트를 만들 때 이 값을 기준으로 삼는다 (loops/frontend.loop.yaml target.extra.tokens). 아직 실제 브랜드 값이 정해지지 않은 스켈레톤이므로 값은 전부 placeholder다.",
+  "color": {
+    "background": { "value": "#FFFFFF" },
+    "foreground": { "value": "#111111" },
+    "primary": { "value": "#0F62FE" },
+    "danger": { "value": "#DA1E28" }
+  },
+  "typography": {
+    "fontFamily": { "value": "Inter, sans-serif" },
+    "fontSize": {
+      "sm": { "value": "12px" },
+      "md": { "value": "14px" },
+      "lg": { "value": "18px" }
+    }
+  },
+  "spacing": {
+    "xs": { "value": "4px" },
+    "sm": { "value": "8px" },
+    "md": { "value": "16px" },
+    "lg": { "value": "24px" }
+  }
+}

@@ -1,0 +1,20 @@
+# Claude Code local-only settings (machine-specific permission overrides)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# Worktrees (harness/worktree.md — 일회성 작업 격리, 커밋 대상 아님)
+.worktrees/
+
+# OS
+.DS_Store
+Thumbs.db

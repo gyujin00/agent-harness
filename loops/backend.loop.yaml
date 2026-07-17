@@ -1,0 +1,34 @@
+# loops/backend.loop.yaml
+# $ref: ./_loop.schema.yaml (loop.spec/v1)
+# verify가 결정적(pass/fail)이라 하네스 설계가 가장 단순한 도메인.
+
+target:
+  paths:  [backend/]
+  labels: ["area:backend"]
+  extra:
+    contracts: [openapi.yaml]      # 계약 테스트 기준
+
+trigger:
+  - { type: human.goal,     detail: "사람이 목표 지정 → Goal loop" }
+  - { type: issue.created,  detail: "area:backend 라벨 이슈 → Ops loop" }
+  - { type: pr.opened,      detail: "리뷰/보완 루프" }
+
+action:
+  agent:    backend-worker
+  worktree: true
+
+verify:
+  gates:
+    - unit + integration test 통과
+    - contract test: 구현이 openapi.yaml 스키마와 일치
+    - lint + typecheck
+    - CI green
+  verifier: verifier          # backend-worker 아님 (분리 원칙)
+  on_fail:  back_to_action
+
+record:
+  outputs: [PR]
+  memory:
+    - docs/harness-log.md
+    - "docs/decisions/ADR-XXX-*.md (설계 결정 시)"
+  required: true

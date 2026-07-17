@@ -1,0 +1,32 @@
+# openapi.yaml — backend 계약 기준 (단일 원본)
+# backend-worker 구현의 근거이자 contract test 대상 (loops/backend.loop.yaml verify.gates).
+# frontend-worker는 이 파일을 읽기 전용으로 참조해 API 연동을 갱신한다
+# (harness/permissions.policy.md: frontend-worker 읽기 허용에 openapi.yaml 포함).
+#
+# 아직 실제 엔드포인트가 없는 스켈레톤 상태. 첫 백엔드 기능을 추가할 때
+# backend-worker가 paths/components를 함께 채운다.
+
+openapi: 3.0.3
+
+info:
+  title: "agent-harness backend API"
+  version: 0.1.0
+  description: >
+    이 문서가 API 계약의 단일 원본이다. 구현이 여기서 벗어나면
+    loops/backend.loop.yaml의 contract test가 실패한다.
+
+servers:
+  - url: http://localhost:8000
+    description: local dev
+
+paths: {}
+# 예시 (실제 엔드포인트 추가 시 이런 형태로 채운다):
+#   /health:
+#     get:
+#       summary: 헬스체크
+#       responses:
+#         "200":
+#           description: OK
+
+components:
+  schemas: {}

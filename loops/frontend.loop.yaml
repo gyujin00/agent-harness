@@ -1,0 +1,32 @@
+# loops/frontend.loop.yaml
+# $ref: ./_loop.schema.yaml (loop.spec/v1)
+# verify가 준결정적. API 스키마 변경이 트리거가 되는 게 특징.
+
+target:
+  paths:  [frontend/]
+  labels: ["area:frontend"]
+  extra:
+    tokens: [design-tokens.json]
+
+trigger:
+  - { type: human.goal,        detail: "화면/컴포넌트 목표 지정 → Goal loop" }
+  - { type: issue.created,     detail: "area:frontend 라벨 이슈 → Ops loop" }
+  - { type: signal,            detail: "openapi.yaml 스키마 변경 감지 → 연동 갱신" }
+
+action:
+  agent:    frontend-worker
+  worktree: true
+
+verify:
+  gates:
+    - typecheck + component test
+    - build 성공
+    - a11y lint (접근성)
+    - "(선택) 시각 회귀 스냅샷 비교"
+  verifier: verifier
+  on_fail:  back_to_action
+
+record:
+  outputs: [PR, "프리뷰 URL / 스크린샷"]
+  memory:  [docs/harness-log.md]
+  required: true
