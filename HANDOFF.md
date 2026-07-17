@@ -22,9 +22,9 @@ SRM 기능 저장소가 아니라, **백엔드·프론트엔드·AI(RAG/NLP)를 
 agent-harness/
 ├── AGENTS.md              헌법(단일원본) → CLAUDE.md 파생
 ├── harness/               connectors · permissions.policy · worktree
-├── loops/                 _loop.schema + backend/frontend/rag.loop
+├── loops/                 _loop.schema + backend/frontend/ai.loop
 ├── eval/                  thresholds · rag-eval-set · run-eval.py (AI verify)
-├── agent-specs/           orchestrator · backend/frontend/rag-worker · verifier
+├── agent-specs/           orchestrator · backend/frontend/ai-worker · verifier
 ├── requirements/          PRD/FRD (Na-Vendor에서 임포트, 손편집 금지 — ADR-006)
 └── docs/                  harness-log · agent-control-log · decisions/ADR
 ```

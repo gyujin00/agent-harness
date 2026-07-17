@@ -1,0 +1,39 @@
+# loops/ai.loop.yaml
+# $ref: ./_loop.schema.yaml (loop.spec/v1)
+# ★ 핵심 도메인: verify가 비결정적이라 eval 하네스(eval/)가 통과 기준을 대신한다.
+# verify.gates는 예시다 — 실제 AI 기능 성격(RAG/분류/추천 등)에 맞는 지표로
+# /intake(또는 사람)가 채워 넣는다. 성격이 불명확하면 지어내지 말고 ADR-proposed로 확인 요청.
+
+target:
+  paths:  [ai/]
+  labels: ["area:ai"]
+  extra:
+    prompts:  [ai/prompts/]
+    eval_set: [eval/]     # 실제 eval-set 파일명은 프로젝트마다 다름
+
+trigger:
+  - { type: human.goal,  detail: "AI 기능 목표 지정 → Goal loop" }
+  - { type: signal,      detail: "새 데이터/문서 인제스트 → 재평가" }
+  - { type: signal,      detail: "prompt/모델 변경 → 회귀 평가" }
+  - { type: signal,      detail: "eval.score.regressed → 자동 개선 루프(Ops)" }
+
+action:
+  agent:    ai-worker
+  worktree: true
+
+verify:
+  gates:                                   # 예시 (RAG인 경우) — eval/thresholds.yaml 기준선과 비교
+    - "retrieval@k     >= thresholds.retrieval_at_k   (RAG: 검색 품질)"
+    - "faithfulness    >= thresholds.faithfulness      (RAG: 환각 억제)"
+    - "answer_relevancy >= thresholds.answer_relevancy (RAG: 답변 적합도)"
+    - "분류/추천 등 다른 AI 성격이면 accuracy/precision/recall/MAE 등으로 대체 — thresholds.yaml에 정의"
+    - "기준선 미달 → 실패로 판정하고 action으로 되돌림"
+  verifier: verifier          # ai-worker가 자기 결과를 self-eval 하지 않음
+  on_fail:  back_to_action
+
+record:
+  outputs: [PR, "eval 리포트 (before/after diff)"]
+  memory:
+    - docs/harness-log.md
+    - "docs/decisions/ADR-XXX-*.md (임베딩 모델·청크 전략·Top-K·모델 변경 시)"
+  required: true

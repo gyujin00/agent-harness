@@ -4,7 +4,7 @@ Sprint 수행 중 점진 생성되는 Task. 각 Task는 도메인 loop를 트리
 
 | Task | Sprint | 도메인 | 실행 loop | 상태 | verify 결과 | traceability |
 |------|--------|--------|-----------|------|-------------|--------------|
-| [T-001](task-001.md) | sprint-01 | ai | loops/rag.loop.yaml | todo | - | docs/traceability.md#T-001 |
+| [T-001](task-001.md) | sprint-01 | ai | loops/ai.loop.yaml | todo | - | docs/traceability.md#T-001 |
 
 <!-- 새 Task: plans/_task.template.md 복제 → plans/task-001.md 생성 후 이 표에 한 줄 추가 -->
 <!-- 상태: todo → in_progress → in_verify → done | back_to_action -->

@@ -35,7 +35,7 @@ TOOLS_MAP: dict[str, list[str]] = {
     "orchestrator": ["Read", "Grep", "Glob", "Bash", "Task"],
     "backend-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
     "frontend-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
-    "rag-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
+    "ai-worker": ["Read", "Write", "Edit", "Bash", "Grep", "Glob"],
     "verifier": ["Read", "Grep", "Glob", "Bash", "Write"],
 }
 
@@ -68,7 +68,7 @@ def render_agent_md(meta: dict, body: str, source: Path) -> str:
         f"tools: {', '.join(tools)}\n"
         "---\n"
     )
-    return GENERATED_HEADER.format(source=source.relative_to(ROOT)) + frontmatter + "\n" + body.rstrip() + "\n"
+    return GENERATED_HEADER.format(source=source.relative_to(ROOT).as_posix()) + frontmatter + "\n" + body.rstrip() + "\n"
 
 
 def main() -> int:

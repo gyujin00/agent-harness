@@ -17,7 +17,8 @@
   `eval/thresholds.yaml` 기준선과 비교, verifier가 판정하는 전체 loop 1회전을 실증한다.
 
 ## 완료 조건 (Definition of Done)
-- `loops/rag.loop.yaml`의 verify.gates(retrieval@k/faithfulness/answer_relevancy)를 전부 통과하는
+- `loops/ai.loop.yaml`의 verify.gates(retrieval@k/faithfulness/answer_relevancy — 이 SRM
+  인스턴스는 FAQ RAG이므로 이 세 지표를 실제 값으로 채운다)를 전부 통과하는
   RAG 파이프라인이 `ai/`에 존재한다.
 - `eval/rag-eval-set.jsonl`이 SRM 더미 문항이 아니라 FR-017 corpus(PRD+FRD) 기반 실제 문항으로
   교체돼 있다.

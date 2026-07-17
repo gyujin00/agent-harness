@@ -107,3 +107,49 @@
   OQ-007~010(자연어 매핑·요약 규칙·등급조정 키워드·FAQ 폴백)은 여전히 미확정 — sprint-01 정의 시
   ADR-proposed로 병행 발의하고 AI 워크스트림은 막히지 않은 범위(corpus 구축, RAG 파이프라인 골격)부터
   진행.
+
+## [2026-07-17] harness · generate-agents-baseline-fix · goal_loop
+- action: `docs/superpowers/plans/2026-07-17-generic-harness-intake.md` 실행을 위해 worktree
+  (`harness/generic-intake-framework`)에서 baseline 점검(`generate_agents.py --check`) 중 계획과
+  무관한 기존 버그 2건 발견 후 수정. (1) `scripts/generate_agents.py`의
+  `GENERATED_HEADER.format(source=source.relative_to(ROOT))`가 `.as_posix()` 없이 OS 네이티브
+  구분자를 그대로 써서 Windows에서 `--check`가 5개 파일 전부를 가짜 STALE로 오판정하는 이식성
+  버그 — `.as_posix()` 추가로 수정. (2) `.claude/agents/verifier.md`가 "mtg2-adopt" 세션에서
+  "재생성 → 반영 확인"했다고 기록됐던 doc-verify 게이트 본문(판정 절차·record 절)이 실제로는
+  누락된 채였던 실제 드리프트 — 수정된 스크립트로 재생성해 해소.
+- verify: 5개 spec 전체 재생성 후 `--check` "모든 .claude/agents/*.md가 최신 상태입니다." 확인.
+  `verifier.md`에 "판정 절차"·"## record" 문자열 존재 확인(2건). 헤더 원본 경로가 5개 파일 전부
+  forward-slash로 통일됨 확인. `git status --short` 결과 `scripts/generate_agents.py`와
+  `.claude/agents/verifier.md`만 변경(나머지 4개는 원래도 정확했음 — 버그는 재작성 없이 --check
+  단계에서만 오판정을 냈던 것으로 확인).
+- record: PR 없음(로컬, worktree 안에서 커밋 예정), ADR 없음(가역적 버그 수정)
+- 다음 루프에 넘길 컨텍스트: 이 수정을 커밋한 뒤 본 계획(rag-worker→ai-worker 리네임, /intake
+  커맨드 신설)을 Subagent-Driven으로 이어간다.
+
+## [2026-07-17] harness · rag-to-ai-rename · goal_loop
+- action: `rag-worker`/`loops/rag.loop.yaml`을 `ai-worker`/`loops/ai.loop.yaml`로 리네임하고
+  일반화(agent-specs, loops, permissions.policy.md, hook POLICY 미러, generate_agents.py
+  TOOLS_MAP, AGENTS.md, orchestrator.spec.md, HANDOFF.md, ai/README.md 등 전체 참조 갱신).
+  `docs/superpowers/specs/2026-07-17-generic-harness-intake-design.md` 컴포넌트 A 실행.
+- verify: hook 시나리오 2건(ai-worker의 backend/ 쓰기 차단, ai/prompts/ 쓰기 허용) 기대대로 동작.
+  `generate_agents.py --check` 최신 확인. 전체 grep으로 rag-worker/rag.loop 잔존 참조 0건(역사
+  기록 및 계획 문서 자체 제외) 확인. `docs/decisions/ADR-002-enforce-permissions-via-hook.md`의
+  "rag-worker는 backend/를 건드리지 마" 언급은 실제 파일 경로 참조가 아니라 예시 문구여서(ADR-006/007과
+  달리 깨지는 링크가 없음) 갱신 대상에서 제외함 — 사람 확인됨.
+- record: PR 없음(로컬 커밋), ADR 없음(가역적 리네임)
+- 다음 루프에 넘길 컨텍스트: `.claude/commands/intake.md` 신설이 남음(같은 설계 문서 컴포넌트 B).
+
+## [2026-07-17] harness · intake-idempotency-check · goal_loop
+- action: `/intake` 커맨드의 멱등성 검증(plan Task 6). 기존 `requirements/prd.md`/`frd.md`(navendor-import
+  세션에서 처리됨, 실제 Sprint/Task/ADR/traceability 산출물이 이미 존재하는 상태)를 대상으로 `/intake` 재실행
+  시나리오를 읽기 전용으로 분석. 파일 쓰기 없음 — `git status --short` 공집합 확인.
+- verify: 요구사항 추출(step 2), 도메인 태깅(step 3) PASS. 다운스트림 멱등성(steps 6, 7, 9 — ADR
+  중복제거, traceability 스켈레톤, Sprint-01 후보)도 기존 상태를 정확히 감지하고 스킵/분기 동작 예상 PASS.
+  게이트 검사(steps 4, 5)에서는 UX 마찰 발견(안전성/정확성 버그 아님): 멱등성 판정이 post-/intake 형식으로
+  기록된 해결책만 인식하는데, 수동 pre-/intake 세션(navendor-import 기록, ADR-006 accepted, connectors.md
+  구성)은 이 형식 없이 이미 결정됨. 따라서 재실행 시 이미 응답한 AskUserQuestion 2건이 중복 발동할 가능성. 그러나
+  중복/덮어쓰기/손상은 발생하지 않음 — 사용자가 다시 yes 하면 정상 진행.
+- record: PR 없음(읽기 전용 검증), ADR 없음
+- 다음 루프에 넘길 컨텍스트: 게이트 멱등성 검사를 "accepted ADR 존재" + "기술 harness-log 항목 패턴(navendor-import
+  스타일)" 도 인식하도록 확장하는 것이 좋은 향후 개선 후보. 그러나 safety/correctness 측면에서는 블로커 아님 —
+  plan 항목 7~9(Sprint-01 정의, Task 1회전)는 이 제약 하에서도 즉시 진행 가능.

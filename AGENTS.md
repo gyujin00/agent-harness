@@ -30,7 +30,7 @@
 |--------|-----------|--------|-------------|
 | Backend | `backend/` | `backend-worker` | 결정적 (test/contract/CI) |
 | Frontend | `frontend/` | `frontend-worker` | 준결정적 (typecheck/build/a11y) |
-| AI (RAG/NLP) | `ai/` | `rag-worker` | 비결정적 → **eval 회귀** (`eval/`) |
+| AI | `ai/` | `ai-worker` | 비결정적 → **eval 회귀** (`eval/`) |
 
 세 도메인은 하나의 하네스를 공유하고, `loops/{domain}.loop.yaml`로만 실행이 갈린다.
 
