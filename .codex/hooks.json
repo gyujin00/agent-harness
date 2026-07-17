@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 'C:\\dev\\agent-harness\\.codex\\hooks\\enforce_permissions.py'"
+          }
+        ]
+      }
+    ]
+  }
+}
