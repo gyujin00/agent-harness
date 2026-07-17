@@ -108,7 +108,54 @@ def chunks_by_id(chunks: list[Chunk] | None = None) -> dict[str, Chunk]:
     return {c.id: c for c in chunks}
 
 
+def _self_check() -> None:
+    """Assert-based self-check for chunk_text(), run when this module is
+    executed directly. No pytest in this repo (confirmed convention) --
+    this matches the project's existing pattern of assert/--check-style
+    self-verification in standalone scripts (e.g. scripts/generate_agents.py
+    --check) rather than adding a new test framework dependency for two
+    functions worth of dependency-free, deterministic logic.
+    """
+    # Synthetic text, independent of the real corpus content, so this check
+    # doesn't silently start failing/passing just because requirements/*.md
+    # changed.
+    sample_text = ("가나다라마바사아자차" * 30) + ("ABCDEFGHIJ" * 15)  # 300 + 150 = 450 chars
+    spans = chunk_text(sample_text, chunk_size=100, overlap=20)
+
+    assert spans, "chunk_text produced no spans for non-empty text"
+    assert spans[0][0] == 0, f"first span should start at 0, got {spans[0][0]}"
+    assert spans[-1][1] == len(sample_text), (
+        f"last span should end at len(text)={len(sample_text)}, got {spans[-1][1]}"
+    )
+
+    # No gaps: consecutive spans must touch or overlap (start of the next
+    # span must be <= end of the previous one). step=chunk_size-overlap <
+    # chunk_size guarantees this by construction, but check it for real
+    # instead of just trusting the arithmetic.
+    for (_, e1, _), (s2, _, _) in zip(spans, spans[1:]):
+        assert s2 <= e1, f"gap between chunks: previous end={e1}, next start={s2}"
+
+    # Full coverage: every character index in [0, len(text)) is covered by
+    # at least one span.
+    covered = bytearray(len(sample_text))
+    for start, end, _ in spans:
+        for i in range(start, end):
+            covered[i] = 1
+    assert all(covered), "chunk_text left one or more characters uncovered"
+
+    # Chunk sizes are bounded by chunk_size (last one may be shorter, never
+    # longer).
+    for start, end, text in spans:
+        assert end - start <= 100, f"chunk span {start}:{end} exceeds chunk_size"
+        assert len(text) == end - start
+
+    print("ai/corpus.py chunk_text self-check: PASS "
+          f"({len(spans)} spans over {len(sample_text)} synthetic chars, no gaps, full coverage)")
+
+
 if __name__ == "__main__":
+    _self_check()
+
     built = load_or_build_chunks(force=True)
     print(f"built {len(built)} chunks -> {CHUNKS_CACHE}")
     for c in built[:3]:

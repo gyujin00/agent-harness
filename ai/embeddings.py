@@ -15,39 +15,22 @@ don't want to force reviewers/CI to redo just to check out the branch.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 
 from ai.corpus import Chunk, CORPUS_DIR, load_or_build_chunks
+from ai.llm_client import get_client
 
 EMBEDDINGS_CACHE = CORPUS_DIR / "embeddings.npy"
 EMBEDDINGS_META = CORPUS_DIR / "embeddings_meta.json"
 
 EMBEDDING_MODEL = "text-embedding-3-small"  # eval/thresholds.yaml config.embedding_model
 
-_client = None
-
-
-def _get_client():
-    global _client
-    if _client is None:
-        from openai import OpenAI  # imported lazily so modules that don't need it can be imported without the dep installed at import time
-
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError(
-                "OPENAI_API_KEY is not set in the environment. "
-                "This pipeline calls the real OpenAI API (docs/decisions/ADR-006) and does not fall back to a mock."
-            )
-        _client = OpenAI(api_key=api_key)
-    return _client
-
 
 def embed_texts(texts: list[str], model: str = EMBEDDING_MODEL, batch_size: int = 100) -> list[list[float]]:
     """Embed a list of texts via the real OpenAI Embeddings API, batched."""
-    client = _get_client()
+    client = get_client()
     out: list[list[float]] = []
     for i in range(0, len(texts), batch_size):
         batch = texts[i : i + batch_size]

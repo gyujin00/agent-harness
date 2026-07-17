@@ -1,8 +1,8 @@
 """ai/scoring.py — real faithfulness / answer-relevancy scorers for FR-017 eval.
 
 Wired into eval/run-eval.py's score_faithfulness / score_answer_relevancy.
-Neither of these is a stub -- both make real OpenAI API calls (or reuse the
-embedding cache) and produce a genuine 0.0-1.0 score.
+Neither of these is a stub -- both make real OpenAI API calls and produce a
+genuine 0.0-1.0 score.
 
 ## score_faithfulness — LLM judge (gpt-4o-mini)
 
@@ -23,90 +23,75 @@ This is not score-gaming: it's scoring the actual faithfulness property
 (did the system assert anything not backed by evidence?) for the one case
 where there's no chunk text to run the LLM judge against.
 
-## score_answer_relevancy — embedding cosine similarity
+## score_answer_relevancy — LLM judge (gpt-4o-mini), question vs. answer
 
-cosine_similarity(embed(answer), embed(expected_answer)), reusing
-ai/embeddings.embed_query (same text-embedding-3-small model already paid
-for/cached for retrieval -- no new infra). No special-casing needed here:
-eval/rag-eval-set.jsonl's BR-007 regression sample sets `expected_answer`
-to (near-)exactly the ADR-007 fallback text, so a correctly-triggered
-fallback naturally scores near 1.0 by plain embedding similarity, and an
-incorrect refusal-when-answerable or answer-when-should-refuse naturally
-scores low -- the eval-set authoring choice does the special-casing, not
-the scorer code.
+T-001 code review finding: the original implementation was
+`cosine(embed(answer), embed(expected_answer))`. That measures "does this
+answer's wording resemble one fixed reference string", not "does this
+answer address the question" -- a metric-design problem, not a phrasing
+nitpick (all 9 eval-set answers were independently judged fully correct and
+faithful, yet several scored low on that metric purely for using different,
+equally-correct vocabulary than the hand-written `expected_answer`, e.g.
+"사유가 안내된다" vs "기존 업체 정보가 안내됩니다").
+
+Replaced with an LLM judge (ai/prompts/relevancy_judge.md) that's given the
+*question* and the *answer* -- explicitly NOT the expected_answer as a
+ground truth to match wording against -- and asked whether the answer
+actually addresses what was asked. eval/run-eval.py's main() was changed
+minimally at one call site (score_answer_relevancy(answer, s.expected_answer)
+-> score_answer_relevancy(s.question, answer)) to plumb the question
+through; no loop/branch/threshold logic in main() was touched.
+
+Symmetric no-evidence handling with score_faithfulness (code review
+Important #3): score_answer_relevancy has its own explicit branch, keyed on
+the answer being exactly ai.generation.FALLBACK_TEXT -- not on eval-set
+wording happening to resemble it. A correctly-triggered BR-007 fallback is,
+by definition, the maximally relevant response to a question with no
+evidence in the corpus. A pipeline that incorrectly declines on an
+answerable question is still caught by retrieval_at_k (retrieved=[] misses
+the gold chunk), so this branch doesn't mask that failure mode from the
+aggregate score.
 """
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 
-import numpy as np
-
 from ai.corpus import chunks_by_id
-from ai.embeddings import embed_query
 from ai.generation import FALLBACK_TEXT, LLM_MODEL
+from ai.llm_client import get_client, load_prompt_section
 
-JUDGE_PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "faithfulness_judge.md"
+FAITHFULNESS_PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "faithfulness_judge.md"
+RELEVANCY_PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "relevancy_judge.md"
 
-_client = None
-_JUDGE_SYSTEM_PROMPT: str | None = None
-
-
-def _get_client():
-    global _client
-    if _client is None:
-        from openai import OpenAI
-
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError(
-                "OPENAI_API_KEY is not set in the environment. "
-                "This scorer calls the real OpenAI API (docs/decisions/ADR-006) and does not fall back to a mock."
-            )
-        _client = OpenAI(api_key=api_key)
-    return _client
+_FAITHFULNESS_SYSTEM_PROMPT: str | None = None
+_RELEVANCY_SYSTEM_PROMPT: str | None = None
 
 
-def _load_judge_prompt() -> str:
-    global _JUDGE_SYSTEM_PROMPT
-    if _JUDGE_SYSTEM_PROMPT is not None:
-        return _JUDGE_SYSTEM_PROMPT
-    raw = JUDGE_PROMPT_PATH.read_text(encoding="utf-8")
-    m = re.search(r"## System Prompt\s*\n\n(.*?)\n\n## User Prompt", raw, re.DOTALL)
-    if not m:
-        raise RuntimeError(f"could not find '## System Prompt' section in {JUDGE_PROMPT_PATH}")
-    _JUDGE_SYSTEM_PROMPT = m.group(1).strip()
-    return _JUDGE_SYSTEM_PROMPT
+def _load_faithfulness_prompt() -> str:
+    global _FAITHFULNESS_SYSTEM_PROMPT
+    if _FAITHFULNESS_SYSTEM_PROMPT is None:
+        _FAITHFULNESS_SYSTEM_PROMPT = load_prompt_section(FAITHFULNESS_PROMPT_PATH, "System Prompt")
+    return _FAITHFULNESS_SYSTEM_PROMPT
 
 
-def _cosine(a: np.ndarray, b: np.ndarray) -> float:
-    denom = (np.linalg.norm(a) * np.linalg.norm(b)) + 1e-12
-    return float(np.dot(a, b) / denom)
+def _load_relevancy_prompt() -> str:
+    global _RELEVANCY_SYSTEM_PROMPT
+    if _RELEVANCY_SYSTEM_PROMPT is None:
+        _RELEVANCY_SYSTEM_PROMPT = load_prompt_section(RELEVANCY_PROMPT_PATH, "System Prompt")
+    return _RELEVANCY_SYSTEM_PROMPT
 
 
 def _parse_score(text: str) -> float:
     m = re.search(r"[-+]?\d*\.?\d+", text)
     if not m:
-        raise ValueError(f"faithfulness judge did not return a parseable number: {text!r}")
+        raise ValueError(f"judge did not return a parseable number: {text!r}")
     value = float(m.group(0))
     return max(0.0, min(1.0, value))
 
 
-def score_faithfulness(answer: str, retrieved: list[str]) -> float:
-    if not retrieved:
-        # No-evidence case (ai/pipeline.py gate triggered). See module docstring.
-        return 1.0 if answer.strip() == FALLBACK_TEXT.strip() else 0.0
-
-    by_id = chunks_by_id()
-    context = "\n\n".join(f"[{cid}] {by_id[cid].text}" for cid in retrieved if cid in by_id)
-
-    client = _get_client()
-    system_prompt = _load_judge_prompt()
-    user_prompt = (
-        f"근거 문서 조각:\n{context}\n\n생성된 답변:\n{answer}\n\n"
-        "위 답변의 충실도(faithfulness) 점수를 0.0~1.0 사이 숫자 하나로만 출력하세요."
-    )
+def _judge(system_prompt: str, user_prompt: str) -> float:
+    client = get_client()
     resp = client.chat.completions.create(
         model=LLM_MODEL,
         temperature=0,
@@ -119,10 +104,32 @@ def score_faithfulness(answer: str, retrieved: list[str]) -> float:
     return _parse_score(raw)
 
 
-def score_answer_relevancy(answer: str, expected: str) -> float:
-    a_vec = np.array(embed_query(answer), dtype=np.float32)
-    e_vec = np.array(embed_query(expected), dtype=np.float32)
-    sim = _cosine(a_vec, e_vec)
-    # cosine similarity for embeddings is already effectively in [~0,1] for
-    # same-language same-domain text pairs, but clamp defensively.
-    return max(0.0, min(1.0, sim))
+def score_faithfulness(answer: str, retrieved: list[str]) -> float:
+    if not retrieved:
+        # No-evidence case (ai/pipeline.py gate triggered). See module docstring.
+        return 1.0 if answer.strip() == FALLBACK_TEXT.strip() else 0.0
+
+    by_id = chunks_by_id()
+    context = "\n\n".join(f"[{cid}] {by_id[cid].text}" for cid in retrieved if cid in by_id)
+    user_prompt = (
+        f"근거 문서 조각:\n{context}\n\n생성된 답변:\n{answer}\n\n"
+        "위 답변의 충실도(faithfulness) 점수를 0.0~1.0 사이 숫자 하나로만 출력하세요."
+    )
+    return _judge(_load_faithfulness_prompt(), user_prompt)
+
+
+def score_answer_relevancy(question: str, answer: str) -> float:
+    """LLM-judge relevancy: does `answer` actually address `question`?
+
+    See module docstring for why this replaced embed(answer)-vs-
+    embed(expected_answer) cosine similarity, and for the explicit
+    no-evidence branch below (code review Important #3).
+    """
+    if answer.strip() == FALLBACK_TEXT.strip():
+        return 1.0
+
+    user_prompt = (
+        f"질문:\n{question}\n\n답변:\n{answer}\n\n"
+        "위 답변이 이 질문에 실제로 답하고 있는 정도(relevancy)를 0.0~1.0 사이 숫자 하나로만 출력하세요."
+    )
+    return _judge(_load_relevancy_prompt(), user_prompt)

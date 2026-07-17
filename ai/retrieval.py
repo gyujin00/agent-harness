@@ -117,8 +117,46 @@ def retrieve(question: str, top_k: int = TOP_K) -> list[Hit]:
     return hits
 
 
+def _self_check() -> None:
+    """Assert-based self-check for mmr_select(), run when this module is
+    executed directly. Pure numpy, no API calls -- mmr_select is
+    deterministic, dependency-free logic, so this doesn't need (and
+    shouldn't need) a live embedding call to validate. No pytest in this
+    repo (confirmed convention); matches the project's existing pattern of
+    assert-based self-verification in standalone scripts.
+    """
+    rng = np.random.default_rng(42)  # fixed seed -> reproducible check
+    n, dims = 30, 16
+    matrix = rng.normal(size=(n, dims)).astype(np.float32)
+    ids = [f"c{i}" for i in range(n)]
+    query = rng.normal(size=(dims,)).astype(np.float32)
+
+    # 1. lambda_=1.0 must degrade to plain top-k similarity ranking: the
+    #    diversity penalty term is weighted by (1-lambda_)=0, so MMR's
+    #    selection order should exactly match sorting by pure cosine
+    #    similarity to the query.
+    selected = mmr_select(query, matrix, ids, top_k=5, lambda_=1.0, candidate_pool=n)
+    actual_order = [idx for idx, _ in selected]
+    sims = _cosine_sim_matrix(query, matrix)
+    expected_order = list(np.argsort(-sims)[:5])
+    assert actual_order == expected_order, (
+        f"lambda_=1.0 should match plain top-k ranking: got {actual_order}, expected {expected_order}"
+    )
+
+    # 2. MMR must never select the same index twice, at any lambda_.
+    for lambda_ in (0.0, 0.3, 0.7, 1.0):
+        selected = mmr_select(query, matrix, ids, top_k=10, lambda_=lambda_, candidate_pool=n)
+        idxs = [idx for idx, _ in selected]
+        assert len(idxs) == len(set(idxs)), f"mmr_select (lambda_={lambda_}) selected the same index twice: {idxs}"
+        assert len(idxs) == 10, f"mmr_select should return top_k={10} indices, got {len(idxs)}"
+
+    print(f"ai/retrieval.py mmr_select self-check: PASS (n={n} synthetic vectors, dims={dims})")
+
+
 if __name__ == "__main__":
     import sys
+
+    _self_check()
 
     q = sys.argv[1] if len(sys.argv) > 1 else "공급업체 등급은 어떻게 산정되나요?"
     for h in retrieve(q):

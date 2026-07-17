@@ -16,10 +16,9 @@ retrieval-score-based layer of this same guardrail.
 """
 from __future__ import annotations
 
-import os
-import re
 from pathlib import Path
 
+from ai.llm_client import get_client, load_prompt_section
 from ai.retrieval import Hit
 
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "faq_answer.md"
@@ -33,6 +32,13 @@ LLM_MODEL = "gpt-4o-mini"  # eval/thresholds.yaml config.llm_model
 # threshold alone (mechanism a) was found insufficient during development.
 NO_EVIDENCE_SENTINEL = "NO_EVIDENCE"
 
+# How much slack _looks_like_sentinel() gives the model around the bare
+# sentinel token before treating a response as "not actually the sentinel"
+# (i.e. a real, if short, answer). Covers things like "NO_EVIDENCE.",
+# "\"NO_EVIDENCE\"", "`NO_EVIDENCE`" without accidentally swallowing a
+# genuinely short real answer that happens to start with unrelated text.
+_SENTINEL_SLACK_CHARS = 6
+
 # ADR-007 (accepted, pattern B): "질의를 이해하지 못했습니다/관련 근거를 찾지 못했습니다"
 # + FAQ 카테고리(품질/납기/가격/대응력)로 유도. This exact string is what gets
 # returned to the user whenever the no-evidence path triggers (both gate
@@ -44,38 +50,38 @@ FALLBACK_TEXT = (
 )
 
 _SYSTEM_PROMPT: str | None = None
-_client = None
-
-
-def _get_client():
-    global _client
-    if _client is None:
-        from openai import OpenAI
-
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError(
-                "OPENAI_API_KEY is not set in the environment. "
-                "This pipeline calls the real OpenAI API (docs/decisions/ADR-006) and does not fall back to a mock."
-            )
-        _client = OpenAI(api_key=api_key)
-    return _client
 
 
 def _load_system_prompt() -> str:
-    """Extract the '## System Prompt' section body out of
-    ai/prompts/faq_answer.md so the prompt text lives in one editable place
-    (the .md file) instead of being duplicated into a Python string.
-    """
     global _SYSTEM_PROMPT
-    if _SYSTEM_PROMPT is not None:
-        return _SYSTEM_PROMPT
-    raw = PROMPT_PATH.read_text(encoding="utf-8")
-    m = re.search(r"## System Prompt\s*\n\n(.*?)\n\n## User Prompt", raw, re.DOTALL)
-    if not m:
-        raise RuntimeError(f"could not find '## System Prompt' section in {PROMPT_PATH}")
-    _SYSTEM_PROMPT = m.group(1).strip()
+    if _SYSTEM_PROMPT is None:
+        _SYSTEM_PROMPT = load_prompt_section(PROMPT_PATH, "System Prompt")
     return _SYSTEM_PROMPT
+
+
+def _looks_like_sentinel(raw_answer: str) -> bool:
+    """Robust check for whether the model emitted the NO_EVIDENCE sentinel.
+
+    Exact string equality (`raw_answer == NO_EVIDENCE_SENTINEL`) is brittle:
+    a trailing period, surrounding quotes/backticks, or a stray newline all
+    make the model's output miss an exact match, and the raw sentinel token
+    would then leak to the end user as if it were a real answer -- a direct
+    BR-007 violation in exactly the scenario BR-007 exists to prevent (code
+    review finding, T-001).
+
+    Strategy: strip whitespace and common wrapping punctuation/quotes, then
+    require the sentinel to be present AND make up nearly the entire
+    response (within _SENTINEL_SLACK_CHARS). The length check matters: a
+    real answer that happens to mention "NO_EVIDENCE" in passing (unlikely
+    but not impossible if a chunk ever quoted this doc) shouldn't be
+    swallowed just because the substring is there.
+    """
+    normalized = raw_answer.strip().strip("`'\"“”‘’.,!?　 \n\t")
+    if not normalized:
+        return False
+    if NO_EVIDENCE_SENTINEL not in normalized:
+        return False
+    return len(normalized) <= len(NO_EVIDENCE_SENTINEL) + _SENTINEL_SLACK_CHARS
 
 
 def format_context(hits: list[Hit]) -> str:
@@ -89,7 +95,7 @@ def generate_answer(question: str, hits: list[Hit], model: str = LLM_MODEL) -> s
     determined (via the NO_EVIDENCE_SENTINEL rule in the prompt) that the
     retrieved context doesn't support an answer.
     """
-    client = _get_client()
+    client = get_client()
     system_prompt = _load_system_prompt()
     context = format_context(hits)
     user_prompt = f"질문: {question}\n\n제공된 문서 조각:\n{context}"
@@ -104,6 +110,6 @@ def generate_answer(question: str, hits: list[Hit], model: str = LLM_MODEL) -> s
     )
     raw_answer = (resp.choices[0].message.content or "").strip()
 
-    if raw_answer == NO_EVIDENCE_SENTINEL:
+    if _looks_like_sentinel(raw_answer):
         return FALLBACK_TEXT
     return raw_answer

@@ -54,7 +54,7 @@ def load_eval_set(path: Path) -> list[Sample]:
 
 # ── 실제 파이프라인 연결 지점 (ai/pipeline.py, ai/scoring.py) ──────
 from ai.pipeline import run_pipeline  # noqa: E402  (FR-017 RAG: retrieve + generate, incl. BR-007 no-evidence gate)
-from ai.scoring import score_faithfulness, score_answer_relevancy  # noqa: E402  (LLM-judge / embedding-cosine scorers, see ai/scoring.py docstring)
+from ai.scoring import score_faithfulness, score_answer_relevancy  # noqa: E402  (LLM-judge scorers, see ai/scoring.py docstring)
 
 
 def score_retrieval_at_k(retrieved: list[str], gold: list[str], k: int) -> float:
@@ -73,7 +73,15 @@ def main() -> int:
         retrieved, answer = run_pipeline(s.question)
         agg["retrieval_at_k"] += score_retrieval_at_k(retrieved, s.gold_chunk_ids, k)
         agg["faithfulness"] += score_faithfulness(answer, retrieved)
-        agg["answer_relevancy"] += score_answer_relevancy(answer, s.expected_answer)
+        # NOTE (code review, T-001): score_answer_relevancy's signature/call
+        # changed from (answer, s.expected_answer) to (s.question, answer).
+        # The original embedding-cosine-vs-expected_answer design measured
+        # wording resemblance to a fixed reference string, not "does the
+        # answer address the question" -- see ai/scoring.py docstring. This
+        # is the one deliberate, minimal exception to "don't touch main()'s
+        # control flow": a single call-site argument swap, no loop/branch/
+        # threshold logic changed.
+        agg["answer_relevancy"] += score_answer_relevancy(s.question, answer)
 
     n = len(samples)
     scores = {m: round(v / n, 4) for m, v in agg.items()}
