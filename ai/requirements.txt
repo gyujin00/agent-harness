@@ -1,0 +1,8 @@
+# ai/requirements.txt — FR-017 FAQ RAG pipeline dependencies (T-001)
+#
+# All three were already present in this environment (checked with
+# `pip show openai numpy pyyaml` before adding this file) -- nothing new
+# was installed. Versions pinned to what was actually verified working.
+openai>=1.0.0
+numpy>=1.26.0
+pyyaml>=6.0.0

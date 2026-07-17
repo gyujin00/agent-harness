@@ -1,0 +1,15 @@
+# Embedding cache: derived, regenerable data from a real, paid OpenAI API
+# call (docs/decisions/ADR-006). Not committed because (1) it's a binary
+# blob with no reviewable diff, (2) it's fully reproducible by rerunning
+# `python -m ai.embeddings` (~140 chunks, 1 batched API call, well under a
+# cent), and (3) keeping it out of git means editing requirements/prd.md or
+# requirements/frd.md can't leave a silently-stale committed cache behind —
+# ai/embeddings.py's load_or_build_embeddings() already detects a
+# chunk-ID/model mismatch and rebuilds automatically.
+#
+# ai/corpus/chunks.json IS committed on purpose -- it's small, human
+# reviewable, and is what eval/rag-eval-set.jsonl's gold_chunk_ids were
+# picked against (so reviewers can check gold IDs are real without calling
+# any API).
+corpus/embeddings.npy
+corpus/embeddings_meta.json

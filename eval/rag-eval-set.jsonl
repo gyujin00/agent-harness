@@ -1,3 +1,9 @@
-{"id": "q001", "question": "SRM에서 공급업체 등급은 어떻게 산정되나요?", "expected_answer": "납기 준수율, 품질 불량률, 가격 경쟁력을 가중 합산해 A~D 등급으로 산정한다.", "gold_chunk_ids": ["supplier-grading-01", "supplier-grading-02"]}
-{"id": "q002", "question": "신규 공급업체 등록 절차의 첫 단계는 무엇인가요?", "expected_answer": "사업자등록증과 기본 심사 서류 제출이 첫 단계다.", "gold_chunk_ids": ["onboarding-01"]}
-{"id": "q003", "question": "계약 갱신 알림은 만료 며칠 전에 발송되나요?", "expected_answer": "계약 만료 30일 전에 자동 발송된다.", "gold_chunk_ids": ["contract-renewal-03"]}
+{"id": "q001", "question": "평가 기준(품질/납기/가격/대응력) 4개 항목은 무엇인가요?", "expected_answer": "평가 기준은 품질, 납기, 가격, 대응력 4개 항목이며 각 1~5점으로 평가한다.", "gold_chunk_ids": ["prd-0006"]}
+{"id": "q002", "question": "평균 점수가 4.5점 이상이면 어떤 등급인가요?", "expected_answer": "평균 점수가 4.5 이상이면 A등급이다.", "gold_chunk_ids": ["prd-0006"]}
+{"id": "q003", "question": "평균 점수가 몇 점 미만이면 저성과 업체로 판정되나요?", "expected_answer": "평균 점수가 3.0 미만이면 저성과 업체로 판정된다.", "gold_chunk_ids": ["prd-0006", "frd-0037"]}
+{"id": "q004", "question": "FAQ 챗봇(FR-017)은 근거 문서를 찾지 못하면 어떻게 답변하나요?", "expected_answer": "근거 문서가 없거나 검색 결과가 없으면 답변을 생성하지 않고 근거 없음을 표시한다.", "gold_chunk_ids": ["prd-0007"]}
+{"id": "q005", "question": "신규 공급업체 등록 절차의 첫 단계는 무엇인가요?", "expected_answer": "구매담당자가 등록 화면에서 업체명, 사업자번호, 카테고리, 담당자 정보, 거래 상태를 입력하는 것이 첫 단계다.", "gold_chunk_ids": ["frd-0030"]}
+{"id": "q006", "question": "공급업체 정보 수정 시 등록일도 수정할 수 있나요?", "expected_answer": "그렇다. PRD가 예외를 두지 않았으므로 등록일도 FR-023의 수정 대상에 포함된다.", "gold_chunk_ids": ["frd-0029", "frd-0035"]}
+{"id": "q007", "question": "평가 입력 시 코멘트는 필수 입력 항목인가요?", "expected_answer": "아니다. 코멘트는 선택 입력(자유 텍스트)으로 간주된다.", "gold_chunk_ids": ["frd-0020"]}
+{"id": "q008", "question": "이미 등록된 사업자번호로 재등록을 시도하면 어떻게 되나요?", "expected_answer": "등록이 거부되고 사유가 안내된다.", "gold_chunk_ids": ["frd-0062", "frd-0030"]}
+{"id": "q009", "question": "공급업체와의 계약 갱신 알림은 만료 며칠 전에 발송되나요?", "expected_answer": "질의를 이해하지 못했거나 관련 근거를 찾지 못했습니다. 평가 기준 FAQ 카테고리(품질, 납기, 가격, 대응력) 중에서 다시 질문해 주세요.", "gold_chunk_ids": []}
