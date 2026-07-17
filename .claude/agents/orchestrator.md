@@ -21,7 +21,7 @@ tools: Read, Grep, Glob, Bash, Task
 ## 절차
 1. 대상 스캔 → 처리할 일감 목록화.
 2. 각 일감의 도메인 판별 → `loops/{domain}.loop.yaml` 선택.
-3. 라벨/경로로 worker 결정: backend-worker | frontend-worker | rag-worker.
+3. 라벨/경로로 worker 결정: backend-worker | frontend-worker | ai-worker.
 4. worktree 생성 지시 후 worker에 위임.
 5. worker 결과가 오면 **verifier**에게 판정을 넘긴다 (직접 판정 금지).
 6. 일감 소진 시 종료 (Ops loop).
