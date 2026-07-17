@@ -33,10 +33,10 @@
 - [x] `docs/decisions/` ADR 템플릿(대안·시행착오 필드 보강) — **Accepted ADR 5건**(ADR-001~005)
 
 ## 평가 산출물 (과제 PDF §6) — 3종 착수
-- [x] ① Agent 통제 기록 `docs/agent-control-journal.md`(회차 5건 서술)
-- [x] ② 하네스 엔지니어링 기록 `docs/harness-engineering-log.md`(설계 근거·시행착오 4건)
+- [x] ① Agent 통제 기록 `docs/evaluation/agent-control-journal.md`(회차 5건 서술)
+- [x] ② 하네스 엔지니어링 기록 `docs/evaluation/harness-engineering-log.md`(설계 근거·시행착오 4건)
 - [x] ③ 의사결정 문서 `docs/decisions/ADR-001~005` + `adr-index.md`
-- [x] 평가기준↔산출물 매핑 `docs/evaluation-map.md`(발표용)
+- [x] 평가기준↔산출물 매핑 `docs/evaluation/evaluation-map.md`(발표용)
 
 ## target 기준 파일
 - [x] `openapi.yaml`(스켈레톤), `design-tokens.json`(스켈레톤)
