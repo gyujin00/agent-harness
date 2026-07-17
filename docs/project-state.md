@@ -47,6 +47,7 @@
 - [ ] `eval/rag-eval-set.jsonl` 실제 도메인 문항 교체 (`requirements/frd.md` FR-017/BR-007/BR-009 기준)
 - [ ] 첫 Sprint→Task→loop→verify→record 1회전 실증 (FR-017 후보)
 - [ ] FRD OQ-007~010(자연어 매핑·요약 규칙·등급조정 키워드·FAQ 폴백) — ADR-proposed 발의 후 Human PM 확인 대기
+- [ ] `/intake` 게이트 멱등성 확장 (기존 ADR accepted/harness-log 항목 인식 — 향후 개선 후보, 현재 블로커 아님)
 - [ ] UI·API·DB 최소 연결 데모
 - [ ] 발표 자료 (무인화·드리프트 방지·재사용성 중심)
 

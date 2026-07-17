@@ -138,3 +138,18 @@
   달리 깨지는 링크가 없음) 갱신 대상에서 제외함 — 사람 확인됨.
 - record: PR 없음(로컬 커밋), ADR 없음(가역적 리네임)
 - 다음 루프에 넘길 컨텍스트: `.claude/commands/intake.md` 신설이 남음(같은 설계 문서 컴포넌트 B).
+
+## [2026-07-17] harness · intake-idempotency-check · goal_loop
+- action: `/intake` 커맨드의 멱등성 검증(plan Task 6). 기존 `requirements/prd.md`/`frd.md`(navendor-import
+  세션에서 처리됨, 실제 Sprint/Task/ADR/traceability 산출물이 이미 존재하는 상태)를 대상으로 `/intake` 재실행
+  시나리오를 읽기 전용으로 분석. 파일 쓰기 없음 — `git status --short` 공집합 확인.
+- verify: 요구사항 추출(step 2), 도메인 태깅(step 3) PASS. 다운스트림 멱등성(steps 6, 7, 9 — ADR
+  중복제거, traceability 스켈레톤, Sprint-01 후보)도 기존 상태를 정확히 감지하고 스킵/분기 동작 예상 PASS.
+  게이트 검사(steps 4, 5)에서는 UX 마찰 발견(안전성/정확성 버그 아님): 멱등성 판정이 post-/intake 형식으로
+  기록된 해결책만 인식하는데, 수동 pre-/intake 세션(navendor-import 기록, ADR-006 accepted, connectors.md
+  구성)은 이 형식 없이 이미 결정됨. 따라서 재실행 시 이미 응답한 AskUserQuestion 2건이 중복 발동할 가능성. 그러나
+  중복/덮어쓰기/손상은 발생하지 않음 — 사용자가 다시 yes 하면 정상 진행.
+- record: PR 없음(읽기 전용 검증), ADR 없음
+- 다음 루프에 넘길 컨텍스트: 게이트 멱등성 검사를 "accepted ADR 존재" + "기술 harness-log 항목 패턴(navendor-import
+  스타일)" 도 인식하도록 확장하는 것이 좋은 향후 개선 후보. 그러나 safety/correctness 측면에서는 블로커 아님 —
+  plan 항목 7~9(Sprint-01 정의, Task 1회전)는 이 제약 하에서도 즉시 진행 가능.
