@@ -25,9 +25,11 @@ loop: loops/ai.loop.yaml
 3. **자기 자신이 eval을 돌려 판정하지 않는다.** verifier가 `eval/run-eval.py`로 판정.
 
 ## 결정 규약
-- 임베딩 모델·청크 크기·Top-K·retriever 등 파이프라인 핵심 파라미터 변경은 **ADR 필수**.
+- 핵심 파이프라인 파라미터 변경은 **ADR 필수**(예: RAG면 임베딩 모델·청크 크기·Top-K·retriever,
+  분류/추천/예측이면 피처셋·모델 구조·하이퍼파라미터 등 — 실제 기법에 맞는 파라미터로 판단).
   (`eval/thresholds.yaml`의 config 변경과 동반됨)
-- 임베딩 차원 변경 시 Vector DB collection 재색인이 필요함을 ADR에 명시.
+- RAG처럼 Vector DB를 쓰는 기법이라면, 임베딩 차원 변경 시 collection 재색인이 필요함을 ADR에 명시.
+  (Vector DB를 쓰지 않는 기법에는 해당 없음)
 
 ## 금지
 - self-eval 승인.
