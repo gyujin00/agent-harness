@@ -1,10 +1,21 @@
 # 하네스 + 루프 워크플로우 스캐폴드
 
-백엔드·프론트엔드·AI(RAG/NLP)를 **하나의 하네스(환경)** 위에서 **도메인별 루프(실행)**로 개발하기 위한 뼈대.
+SRM 기능 저장소가 아니라, **백엔드·프론트엔드·AI(RAG/NLP)를 굴리는 작업 시스템 그 자체**입니다.
+도메인 중립 이름(`agent-harness`)이라 SRM 외 과제로도 복제해 재사용할 수 있습니다.
 
 ## 두 계층
 - **환경 · Harness engineering** — 무엇을 주고 어떻게 통제할지. `harness/`, `.claude/`, `eval/`, `docs/`.
 - **실행 · Loop engineering** — 무엇을 반복시킬지. `plans/`(Sprint·Task) + `loops/*.loop.yaml` (target→trigger→action→verify→record).
+
+## 핵심 규칙 3가지
+1. **work ≠ verify** — worker가 만든 결과는 별도 `verifier`가 `harness/verification.policy.md` 기준으로 판정.
+2. **사람 → orchestrator → worker** — 사람은 worker에게 직접 프롬프트하지 않고, orchestrator가 목표를 Sprint→Task로 분해해 위임.
+3. **모든 루프는 record로 끝난다** — `docs/harness-log.md`·`traceability.md`·`project-state.md` + 필요 시 ADR.
+
+## AI 도메인이 특별한 이유
+백엔드/프론트의 verify는 test pass/fail로 끝나지만, AI(RAG)는 통과 기준을 사람이 못 만들어서
+`eval/`이 verify를 대신한다 — 정답셋(`eval/rag-eval-set.jsonl`)으로 retrieval@k·faithfulness·
+answer_relevancy를 재고 `eval/thresholds.yaml` 기준선과 비교한다.
 
 ## 단일 원본 → 파생
 손으로 편집하는 곳 (Git이 유일한 컨텍스트 원본):
@@ -19,17 +30,29 @@
 임포트만 하고 손편집하지 않는 곳:
 - `requirements/*` (PRD/FRD — 외부 프로젝트에서 가져온 요구사항 스냅샷, 갱신은 재복사+ADR)
 
-## 평가 산출물 (과제 PDF §6 — 코드 외 핵심)
-이 과제는 완성도가 아니라 **과정·통제·근거**를 본다. docs/가 곧 평가 대상이다.
-- ① Agent 통제: `docs/agent-control-journal.md`
-- ② 하네스 엔지니어링: `docs/harness-engineering-log.md`
-- ③ 의사결정·시행착오: `docs/decisions/ADR-*` (`adr-index.md`)
-- 평가기준↔산출물 매핑(발표용): `docs/evaluation-map.md`
+## 폴더 지도
+```
+agent-harness/
+├── AGENTS.md              헌법(단일원본) → CLAUDE.md 파생
+├── README.md              이 문서 (유일한 온보딩 진입점)
+├── harness/               connectors · permissions.policy · worktree
+├── loops/                 _loop.schema + backend/frontend/ai.loop
+├── eval/                  thresholds · rag-eval-set · run-eval.py (AI verify)
+├── agent-specs/           orchestrator · backend/frontend/ai-worker · verifier
+├── requirements/          PRD/FRD (외부 프로젝트에서 임포트, 손편집 금지 — ADR-006)
+├── plans/                 Sprint·Task 계획 (sprint-index · task-index · 템플릿)
+├── backend/ frontend/ ai/  도메인별 실제 코드 (worker 작업 공간)
+├── scripts/               generate_agents.py 등 파생 스크립트
+├── .claude/               Claude Code 설정 (agents · commands · hooks · rules)
+└── docs/                  harness-log · traceability · project-state · decisions/ · evaluation/
+```
 
-## 핵심 규칙 3가지
-1. **work ≠ verify** — worker가 만든 결과는 별도 `verifier`가 `harness/verification.policy.md` 기준으로 판정.
-2. **사람 → orchestrator → worker** — 사람은 worker에게 직접 프롬프트하지 않고, orchestrator가 목표를 Sprint→Task로 분해해 위임.
-3. **모든 루프는 record로 끝난다** — `docs/harness-log.md`·`traceability.md`·`project-state.md` + 필요 시 ADR.
+## 평가 산출물 (과제 PDF §6 — 코드 외 핵심)
+이 과제는 완성도가 아니라 **과정·통제·근거**를 본다. `docs/`가 곧 평가 대상이다.
+- ① Agent 통제: `docs/evaluation/agent-control-journal.md`
+- ② 하네스 엔지니어링: `docs/evaluation/harness-engineering-log.md`
+- ③ 의사결정·시행착오: `docs/decisions/ADR-*` (`adr-index.md`)
+- 평가기준↔산출물 매핑(발표용): `docs/evaluation/evaluation-map.md`
 
 ## 2차 미팅 피드백 반영 (무인화·드리프트 방지·재사용성)
 - **Sprint/Task** (`plans/`): Task를 미리 다 만들지 않고 Sprint 수행하며 점진 생성.
@@ -37,5 +60,14 @@
 - **추적성** (`docs/traceability.md`): 요구사항→문서→Task→코드→테스트 연결.
 - **현재 상태** (`docs/project-state.md`): 사람이 한눈에 보는 진행 단면.
 
-## AI 도메인이 특별한 이유
-백엔드/프론트의 verify는 test pass/fa
+## 지금 상태는 어디서 보나
+이 문서는 구조 설명이 목적이라 상세 진행 체크리스트는 담지 않는다. "지금 어디까지 왔는지"는
+항상 `docs/project-state.md`를 확인한다 — 새 세션·회의·인수인계의 진입점.
+
+## 새 세션/다른 프로젝트에서 이 하네스를 시작하려면
+1. `requirements/`에 PRD/FRD(또는 이에 준하는 개발 문서)를 넣는다.
+2. `/intake` 슬래시 커맨드를 실행한다 — 요구사항 추출, 도메인 태깅, ADR-proposed 초안, Sprint-01
+   후보까지 자동으로 만든다(`.claude/commands/intake.md`).
+3. 막힌 지점(외부 구현 존재 신호·실제 API/비용 신호)에서만 확인 질문이 온다 — 나머지는 자동 진행.
+4. 결과를 검토하고 Sprint를 승인하면, `plans/task-XXX.md`를 참고해 도메인 worker에게 위임 →
+   verifier가 판정 → record로 이어간다.

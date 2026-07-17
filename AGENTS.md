@@ -65,10 +65,10 @@ Sprint/Task가 인용하는 요구사항 ID(REQ-*/FR-*)의 기준 문서는 `req
 - `docs/project-state.md` — 현재 상태 스냅샷(단면). 새 세션·회의·인수인계의 진입점.
 
 ### 4.2 평가 산출물 (과제 PDF §6 "코드 외 핵심 산출물")
-- `docs/agent-control-journal.md` — ① Agent 활용·통제 기록(목표·맥락·제약·프롬프트·판단·교정, 서사).
-- `docs/harness-engineering-log.md` — ② 하네스 설계 근거·시행착오·개선 시도(정책의 '왜').
+- `docs/evaluation/agent-control-journal.md` — ① Agent 활용·통제 기록(목표·맥락·제약·프롬프트·판단·교정, 서사).
+- `docs/evaluation/harness-engineering-log.md` — ② 하네스 설계 근거·시행착오·개선 시도(정책의 '왜').
 - `docs/decisions/ADR-XXX-*.md` + `adr-index.md` — ③ 의사결정·시행착오(대안·근거 포함). 되돌리기 어려운 결정.
-- `docs/evaluation-map.md` — 평가기준 ↔ 산출물 1:1 매핑(발표용 인덱스).
+- `docs/evaluation/evaluation-map.md` — 평가기준 ↔ 산출물 1:1 매핑(발표용 인덱스).
 
 원칙: 실행 로그(4.1)는 기계·다음 루프가 읽고, 평가 산출물(4.2)은 사람·평가자가 읽는다. 둘 다 record 대상.
 

@@ -218,3 +218,22 @@
   여전히 문서상의 선언뿐이라, 다음 후속 과제로 "eval 회귀를 실제로 감지해 자동으로 이 loop를 재실행하는
   메커니즘"이 남아있다. 다음 Sprint 후보: FR-016/018/019/020 중 하나, 또는 이 자동 재실행 메커니즘
   자체.
+
+## [2026-07-17] harness · folder-readability · goal_loop
+- action: 루트 안내 문서 4개(AGENTS.md/CLAUDE.md/HANDOFF.md/README.md)의 중복 해소 —
+  `HANDOFF.md`를 `README.md`에 흡수 후 삭제(상태 체크리스트는 `docs/project-state.md`와
+  중복이라 버림, project-state.md가 이미 최신 상태를 갖고 있어 정보 손실 아님). `docs/`의 평가
+  산출물 3종(agent-control-journal.md, harness-engineering-log.md, evaluation-map.md)을
+  `docs/evaluation/`으로 이동. hook/permissions.policy.md가 참조하는 경로(도메인 폴더,
+  `plans/`, `docs/harness-log.md`·`traceability.md`·`agent-control-log.md`, 계약 파일)는
+  브레인스토밍 단계에서 명시적으로 범위 밖으로 제외해 건드리지 않음.
+  `docs/superpowers/specs/2026-07-17-folder-readability-design.md` 참고.
+- verify: 저장소 전체 grep으로 옛 경로/파일명 잔존 참조 확인 — 계획에서 미리 제외한 목록 외에
+  2건(`docs/evaluation/agent-control-journal.md`의 과거 세션 서술, 이 작업 자신의 설계 문서)이
+  추가로 나왔으나 둘 다 역사 기록/자기 서술이라 정당한 예외로 판단, 계획의 제외 목록이 완벽하지
+  않았을 뿐 실제 끊어진 링크는 0건. hook POLICY/permissions.policy.md가 이동 대상 파일명을
+  참조하지 않음(원래도 안 했음) 재확인. `generate_agents.py --check` 최신 확인(영향 없음, 기대대로).
+- record: PR 없음(로컬, 이 브랜치의 마무리 방식은 별도 결정 예정), ADR 없음(가역적 문서 재배치)
+- 다음 루프에 넘길 컨텍스트: 없음. 도메인 폴더 구조(backend/frontend/ai 3분할) 자체를 더 정리하고
+  싶다면 별도 브레인스토밍이 필요(이번 범위 아님, `docs/superpowers/specs/2026-07-17-folder-readability-design.md`
+  "정직한 한계" 절 참고).
