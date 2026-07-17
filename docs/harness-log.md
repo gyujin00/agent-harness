@@ -107,3 +107,21 @@
   OQ-007~010(자연어 매핑·요약 규칙·등급조정 키워드·FAQ 폴백)은 여전히 미확정 — sprint-01 정의 시
   ADR-proposed로 병행 발의하고 AI 워크스트림은 막히지 않은 범위(corpus 구축, RAG 파이프라인 골격)부터
   진행.
+
+## [2026-07-17] harness · generate-agents-baseline-fix · goal_loop
+- action: `docs/superpowers/plans/2026-07-17-generic-harness-intake.md` 실행을 위해 worktree
+  (`harness/generic-intake-framework`)에서 baseline 점검(`generate_agents.py --check`) 중 계획과
+  무관한 기존 버그 2건 발견 후 수정. (1) `scripts/generate_agents.py`의
+  `GENERATED_HEADER.format(source=source.relative_to(ROOT))`가 `.as_posix()` 없이 OS 네이티브
+  구분자를 그대로 써서 Windows에서 `--check`가 5개 파일 전부를 가짜 STALE로 오판정하는 이식성
+  버그 — `.as_posix()` 추가로 수정. (2) `.claude/agents/verifier.md`가 "mtg2-adopt" 세션에서
+  "재생성 → 반영 확인"했다고 기록됐던 doc-verify 게이트 본문(판정 절차·record 절)이 실제로는
+  누락된 채였던 실제 드리프트 — 수정된 스크립트로 재생성해 해소.
+- verify: 5개 spec 전체 재생성 후 `--check` "모든 .claude/agents/*.md가 최신 상태입니다." 확인.
+  `verifier.md`에 "판정 절차"·"## record" 문자열 존재 확인(2건). 헤더 원본 경로가 5개 파일 전부
+  forward-slash로 통일됨 확인. `git status --short` 결과 `scripts/generate_agents.py`와
+  `.claude/agents/verifier.md`만 변경(나머지 4개는 원래도 정확했음 — 버그는 재작성 없이 --check
+  단계에서만 오판정을 냈던 것으로 확인).
+- record: PR 없음(로컬, worktree 안에서 커밋 예정), ADR 없음(가역적 버그 수정)
+- 다음 루프에 넘길 컨텍스트: 이 수정을 커밋한 뒤 본 계획(rag-worker→ai-worker 리네임, /intake
+  커맨드 신설)을 Subagent-Driven으로 이어간다.
