@@ -9,7 +9,7 @@ worker/verifier가 Task 완료(record) 시 자기 행을 갱신한다.
 
 | 요구사항 ID | 기준 문서 | Task | 도메인 | 코드/PR | 테스트·검증 | 상태 |
 |-------------|-----------|------|--------|---------|-------------|------|
-| FR-017 (REQ-017) | `requirements/frd.md`, `plans/sprint-01.md` | T-001 | ai | PR #— | eval 리포트(미실행) | todo |
+| FR-017 (REQ-017) | `requirements/frd.md`, `plans/sprint-01.md` | T-001 | ai | PR #2 | eval PASS: retrieval@k=0.8889, faithfulness=1.0000, answer_relevancy=1.0000 (기준선 0.80/0.85/0.80, verifier 2026-07-17) | done |
 
 <!-- FR-017의 기준 문서 우선순위: requirements/frd.md(§3 FR-017, §5 BR-007/BR-009, §11 OQ-006/OQ-010)
      > requirements/prd.md(REQ-017) > docs/decisions/ADR-006(실 API 계승 근거). -->
