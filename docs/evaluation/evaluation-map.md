@@ -11,8 +11,8 @@
 
 | PDF 평가 산출물 | 우리 산출물 | 성격 |
 |-----------------|-------------|------|
-| ① Agent 활용·통제 기록 (목표·맥락·제약, 주요 프롬프트, 결과 판단·교정) | `docs/agent-control-journal.md`(서사) + `docs/agent-control-log.md`(이벤트) | 회차별 통제 서술 + 기계 로그 |
-| ② 하네스 엔지니어링 기록 (전략·검증 루프·가드레일, 적용 결과·개선 시도) | `docs/harness-engineering-log.md` + `harness/*.md` + `.claude/hooks/` | 설계 서사(왜) + 정책(무엇) + 강제(실물) |
+| ① Agent 활용·통제 기록 (목표·맥락·제약, 주요 프롬프트, 결과 판단·교정) | `agent-control-journal.md`(서사) + `docs/agent-control-log.md`(이벤트) | 회차별 통제 서술 + 기계 로그 |
+| ② 하네스 엔지니어링 기록 (전략·검증 루프·가드레일, 적용 결과·개선 시도) | `harness-engineering-log.md` + `harness/*.md` + `.claude/hooks/` | 설계 서사(왜) + 정책(무엇) + 강제(실물) |
 | ③ 의사결정·시행착오 문서 (범위·기술 선택 근거, 막힌 지점·해결) | `docs/decisions/ADR-001~005` + `adr-index.md` | 실제 결정 5건, 대안·시행착오 포함 |
 | 동작 결과물·소스 (완성도 자체는 핵심 아님) | `backend/ frontend/ ai/`(현재 스켈레톤) | 범위 선정 후 구축 예정 |
 | 발표 자료 | (예정) `docs/`의 위 산출물 기반 | 과정·판단 설명 |

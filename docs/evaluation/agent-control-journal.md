@@ -68,4 +68,4 @@
 - 주요 지시: 3개 카테고리를 채워라.
 - 결과 판단: (진행 중) 각 산출물이 PDF 평가 항목과 1:1 매핑되는지 `evaluation-map.md`로 확인.
 - 교정: (해당 시 추가)
-- 산출물: 이 문서, `harness-engineering-log.md`, `docs/decisions/ADR-001~005`, `docs/evaluation-map.md`.
+- 산출물: 이 문서, `harness-engineering-log.md`, `docs/decisions/ADR-001~005`, `evaluation-map.md`.
