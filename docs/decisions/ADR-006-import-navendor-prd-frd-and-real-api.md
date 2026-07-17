@@ -4,7 +4,7 @@
 - 날짜: 2026-07-17
 - 도메인: harness
 - 관련 루프/문서: `requirements/prd.md`, `requirements/frd.md`, `harness/connectors.md`,
-  `eval/thresholds.yaml`, `loops/rag.loop.yaml`, `agent-specs/rag-worker.spec.md`
+  `eval/thresholds.yaml`, `loops/ai.loop.yaml`, `agent-specs/ai-worker.spec.md`
 
 ## 맥락
 
@@ -60,8 +60,8 @@
   (`requirements/README.md` 원칙 절 참고).
 - 실제 API 계승은 이미 한 번 검증된 방향을 재사용하는 것이라 "mock으로 시작했다가 다시 실 API로
   전환"하는 이중 ADR·이중 구현을 피한다. 대신 connector 확대(harness/connectors.md 원칙 "connector를
-  늘리는 것은 곧 통제 범위를 늘리는 것")에 따라 `rag-worker`만 접근하도록 권한을 좁혀 유지한다
-  (`harness/permissions.policy.md`는 이미 `ai/`, `ai/prompts/`로 rag-worker 쓰기 범위를 한정).
+  늘리는 것은 곧 통제 범위를 늘리는 것")에 따라 `ai-worker`만 접근하도록 권한을 좁혀 유지한다
+  (`harness/permissions.policy.md`는 이미 `ai/`, `ai/prompts/`로 ai-worker 쓰기 범위를 한정).
 
 ## 시행착오 / 검증
 
@@ -81,7 +81,7 @@
 - 변경: `AGENTS.md`(§0, §3.5), `README.md`, `HANDOFF.md`(폴더 지도), `harness/connectors.md`(AI
   connector 2종 추가).
 - 후속 영향: `eval/thresholds.yaml`의 `embedding_model`을 실제 API 기준으로 갱신 필요(별도 커밋),
-  `rag-worker`의 프롬프트/파이프라인 구현 시 실제 API 키 주입 경로(환경변수/시크릿 매니저)를
+  `ai-worker`의 프롬프트/파이프라인 구현 시 실제 API 키 주입 경로(환경변수/시크릿 매니저)를
   `.claude/hooks`가 차단하지 않는지 확인 필요.
 - 되돌리기 비용: 중간. mock으로 되돌리려면 `harness/connectors.md`의 connector 제거 + 별도 ADR +
   이미 실 API로 짠 프롬프트/파이프라인 재작성이 필요하다.

@@ -4,7 +4,7 @@
 - 날짜: 2026-07-17
 - 도메인: ai
 - 관련 루프/문서: `requirements/frd.md`(OQ-010, BR-007, FR-017), `plans/sprint-01.md`,
-  `plans/task-001.md`, `agent-specs/rag-worker.spec.md`
+  `plans/task-001.md`, `agent-specs/ai-worker.spec.md`
 
 ## 맥락
 
@@ -15,7 +15,7 @@ FRD는 FR-017(FAQ)에 대해 "저장된 근거 문서 검색 결과에 근거해
 남겼다(FLOW-005 3단계: "이 FRD는 추측해 채우지 않고 확인 필요로 남긴다").
 
 `AGENTS.md`/브리핑 원칙("규칙이 미정인 것은 지어내지 말고 Human PM에게 에스컬레이션한다")에 따라,
-이 결정은 rag-worker가 임의로 확정하지 않고 이 ADR로 발의해 사람 확인을 기다린다. 다만 AI 워크스트림
+이 결정은 ai-worker가 임의로 확정하지 않고 이 ADR로 발의해 사람 확인을 기다린다. 다만 AI 워크스트림
 전체가 이것 때문에 멈추지는 않도록, Human PM 확인 전까지 적용할 **임시 동작**을 함께 제안한다.
 
 ## 대안
@@ -36,8 +36,8 @@ FRD는 FR-017(FAQ)에 대해 "저장된 근거 문서 검색 결과에 근거해
 사용자 경험 일관성 측면에서 최소 침습적이다.
 
 **이 결정은 `proposed` 상태다.** Human PM이 승인하면 `accepted`로 바꾸고 `requirements/frd.md`
-자체는 건드리지 않되(임포트 스냅샷, 손편집 금지) 이 ADR을 정본으로 `agent-specs/rag-worker.spec.md`
-/ `ai/prompts/`에 반영한다. Human PM이 다른 안(A/C 등)을 원하면 이 ADR을 갱신하고 rag-worker 구현도
+자체는 건드리지 않되(임포트 스냅샷, 손편집 금지) 이 ADR을 정본으로 `agent-specs/ai-worker.spec.md`
+/ `ai/prompts/`에 반영한다. Human PM이 다른 안(A/C 등)을 원하면 이 ADR을 갱신하고 ai-worker 구현도
 함께 되돌린다.
 
 ## 근거

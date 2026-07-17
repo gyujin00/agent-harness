@@ -1,9 +1,9 @@
 # ai/
 
-`rag-worker` 전용 작업 공간 (`harness/permissions.policy.md`: 쓰기 허용, `ai/prompts/` 포함).
+`ai-worker` 전용 작업 공간 (`harness/permissions.policy.md`: 쓰기 허용, `ai/prompts/` 포함).
 
 - 목표: 기능 추가가 아니라 **eval 점수 회귀 방지/개선** (`../eval/`).
-- 실행 루프: [`../loops/rag.loop.yaml`](../loops/rag.loop.yaml)
+- 실행 루프: [`../loops/ai.loop.yaml`](../loops/ai.loop.yaml)
 - verify: `../eval/run-eval.py` 실행 → `../eval/thresholds.yaml` 기준선 비교 — `verifier`가 판정.
 - 임베딩 모델·청크 전략·Top-K 변경은 ADR 필수 (`../docs/decisions/`).
 

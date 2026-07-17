@@ -1,6 +1,6 @@
 """eval/run-eval.py — RAG verify 하네스 뼈대
 
-verifier sub-agent가 rag.loop.yaml의 verify 단계에서 호출한다.
+verifier sub-agent가 ai.loop.yaml의 verify 단계에서 호출한다.
 정답셋(rag-eval-set.jsonl)으로 파이프라인을 돌려 점수를 내고,
 thresholds.yaml 기준선과 비교해 pass/fail을 판정한다.
 

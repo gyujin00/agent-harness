@@ -1,5 +1,5 @@
 # eval/thresholds.yaml — RAG 회귀 기준선 (단일 원본)
-# verifier가 이 기준을 넘지 못하면 rag.loop.yaml의 verify를 실패시킨다.
+# verifier가 이 기준을 넘지 못하면 ai.loop.yaml의 verify를 실패시킨다.
 # 기준선 상향은 개선의 증거이자 record 대상. 하향은 ADR 필수.
 
 retrieval_at_k:      0.80      # top-k 안에 정답 청크가 들어온 비율
