@@ -45,7 +45,10 @@
 ## 남은 큰 일 (HANDOFF "다음 작업" + 2차 미팅)
 - [ ] `eval/run-eval.py` 파이프라인/스코어러 실제 연결 (실제 ai/ 구현 시, 실제 OpenAI API 호출)
 - [ ] `eval/rag-eval-set.jsonl` 실제 도메인 문항 교체 (`requirements/frd.md` FR-017/BR-007/BR-009 기준)
-- [ ] 첫 Sprint→Task→loop→verify→record 1회전 실증 (FR-017 후보)
+- [x] 첫 Sprint→Task→loop→verify→record 1회전 실증 (FR-017 후보) — Sprint-01 정의 완료, 실제
+  구현(T-001)은 아직 미착수
+- [x] `rag-worker` → `ai-worker` 일반화 + `/intake` 부트스트랩 커맨드 신설
+  (`docs/superpowers/specs/2026-07-17-generic-harness-intake-design.md`)
 - [ ] FRD OQ-007~010(자연어 매핑·요약 규칙·등급조정 키워드·FAQ 폴백) — ADR-proposed 발의 후 Human PM 확인 대기
 - [ ] `/intake` 게이트 멱등성 확장 (기존 ADR accepted/harness-log 항목 인식 — 향후 개선 후보, 현재 블로커 아님)
 - [ ] UI·API·DB 최소 연결 데모
