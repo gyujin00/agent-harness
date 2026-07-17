@@ -133,6 +133,8 @@
   `docs/superpowers/specs/2026-07-17-generic-harness-intake-design.md` 컴포넌트 A 실행.
 - verify: hook 시나리오 2건(ai-worker의 backend/ 쓰기 차단, ai/prompts/ 쓰기 허용) 기대대로 동작.
   `generate_agents.py --check` 최신 확인. 전체 grep으로 rag-worker/rag.loop 잔존 참조 0건(역사
-  기록 및 계획 문서 자체 제외) 확인.
+  기록 및 계획 문서 자체 제외) 확인. `docs/decisions/ADR-002-enforce-permissions-via-hook.md`의
+  "rag-worker는 backend/를 건드리지 마" 언급은 실제 파일 경로 참조가 아니라 예시 문구여서(ADR-006/007과
+  달리 깨지는 링크가 없음) 갱신 대상에서 제외함 — 사람 확인됨.
 - record: PR 없음(로컬 커밋), ADR 없음(가역적 리네임)
 - 다음 루프에 넘길 컨텍스트: `.claude/commands/intake.md` 신설이 남음(같은 설계 문서 컴포넌트 B).
