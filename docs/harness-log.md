@@ -153,3 +153,68 @@
 - 다음 루프에 넘길 컨텍스트: 게이트 멱등성 검사를 "accepted ADR 존재" + "기술 harness-log 항목 패턴(navendor-import
   스타일)" 도 인식하도록 확장하는 것이 좋은 향후 개선 후보. 그러나 safety/correctness 측면에서는 블로커 아님 —
   plan 항목 7~9(Sprint-01 정의, Task 1회전)는 이 제약 하에서도 즉시 진행 가능.
+
+## [2026-07-17] ai · T-001 · goal_loop (verify)
+- action: FR-017 FAQ RAG 파이프라인(worktree `.worktrees/ai-T-001`, 브랜치 `ai/T-001-fr-017-faq-rag`,
+  커밋 `e8d304a`~`9ce9f1c`)에 대한 독립 verify. work ≠ verify 원칙에 따라 ai-worker의 자체 실행 결과를
+  신뢰하지 않고 전부 재실행함.
+- verify:
+  1) **eval 게이트**(`eval/run-eval.py` 실제 실행, 실 OpenAI API 비용 발생): retrieval_at_k 0.8889
+     PASS(기준 0.80) / faithfulness 1.0000 PASS(기준 0.85) / answer_relevancy 1.0000 PASS(기준 0.80).
+     `eval/thresholds.yaml` 기준선 대비 전부 통과. (참고: retrieval_at_k 8/9=0.8889는 정합적 — 9번
+     샘플이 BR-007 무근거 케이스라 gold_chunk_ids=[]이며 정의상 이 항목의 retrieval_at_k는 항상 0이
+     되므로, 8개 실답변 샘플이 전부 정답 청크를 회수했다는 뜻.)
+     환경 메모(정책 판정에는 영향 없음): 기본 Windows 콘솔(cp949)에서 `python eval/run-eval.py`를
+     그대로 실행하면 마지막 성공 출력의 em-dash(—) 문자 때문에 `UnicodeEncodeError`로 exit code 1을
+     반환함 — `git diff main..HEAD -- eval/run-eval.py`로 확인 결과 이 줄은 T-001 이전 원본 스캐폴드에
+     이미 있던 코드로 T-001이 만든 회귀가 아님. `PYTHONIOENCODING=utf-8`로 재실행하면 exit code 0,
+     동일 점수로 정상 종료 확인. CI가 exit code만으로 게이트를 판정한다면 Windows 기본 로케일에서
+     오탐 FAIL을 낼 수 있어 별도 개선 과제로 남김(이번 verify 대상 코드 밖).
+  2) **eval-set 진위 확인**: `eval/rag-eval-set.jsonl` 9문항 중 4개(q001/prd-0006, q003/prd-0006+
+     frd-0037, q007/frd-0020, q008/frd-0062+frd-0030)를 무작위 추출해 `ai/corpus/chunks.json`의 실제
+     청크 텍스트와 대조 — 모두 expected_answer를 그대로 뒷받침함(예: q008의 "등록이 거부되고 사유가
+     안내된다"는 frd-0062의 AC-002 원문과 정확히 일치). q009(계약 갱신 알림 며칠 전 발송)는 진짜
+     무근거(no-evidence) 케이스임을 확인 — `requirements/` 전체에 "계약 갱신/갱신 알림/계약 만료" 관련
+     문구가 전무(grep 0건). SRM 시스템에 그럴듯하게 인접하지만 실제로 범위 밖인 질문이라 무의미한
+     gibberish 테스트가 아님. PASS.
+  3) **BR-007 스팟체크**: `requirements/frd.md` BR-007 원문("근거 문서가 없거나 검색 결과가 없으면
+     답변을 생성하지 않고 근거 없음을 표시한다") 확인. `ai/pipeline.py`/`ai/generation.py` 직접 読 —
+     노이즈 플로어(cosine<0.22 조기 차단) + LLM sentinel(NO_EVIDENCE, `_looks_like_sentinel`로 견고화)
+     2단 게이트가 실제 도달 가능한 코드로 구현돼 있음(죽은 코드/주석 아님). eval-set에 없는 질문 3개를
+     직접 실행: "오늘 점심 뭐 먹을까요?"(완전 무관 주제) → 정상 폴백, "실시간 ERP 연동은 어떻게
+     처리되나요?"(SRM 인접·범위 밖, 모듈 docstring이 스스로 언급한 어려운 케이스) → 정상 폴백(노이즈
+     플로어가 아니라 LLM sentinel 레이어에서 정확히 판단), "공급업체 평가 등급은 어떻게 산정되나요?"
+     (범위 내) → 근거 청크 5개 회수 + 올바른 등급 구간 답변. 3/3 기대대로 동작. PASS.
+  4) **doc-verify(Sprint/Task 일치)**: `plans/task-001.md` DoD 대조. T-001 고유 커밋 3개
+     (`e8d304a`/`3a4b9fd`/`9ce9f1c`)만 분리해 diff 확인 — 건드린 파일은 `ai/**`, `ai/prompts/**`,
+     `eval/rag-eval-set.jsonl`, `eval/run-eval.py`, 그리고 상태 필드만 바뀐 `plans/task-001.md`,
+     `plans/task-index.md`, `docs/traceability.md` — Scope 위반 0건(`backend/`, `frontend/` 등 범위
+     밖 접근 없음). `run_pipeline`/`score_faithfulness`/`score_answer_relevancy`에 `NotImplementedError`
+     스텁 잔존 0건(grep 확인). eval-set에 무근거 케이스 1건 포함 및 통과 확인(2번 항목). PR 설명/커밋
+     메시지에 self-eval 승인 주장 없음(`eval/run-eval.py` 자체 docstring이 "공식 판정은 verifier가
+     한다"고 명시) — self-eval 없음 조건 충족. `ai.loop.yaml`의 verify.gates(retrieval@k/faithfulness/
+     answer_relevancy 기준선) 전부 통과(1번 항목). PASS.
+- **판정: PASS.** 4개 게이트 전부 통과. `docs/traceability.md`의 FR-017 행을 in_verify로 갱신(record/PR
+  단계는 verifier 소관 밖이라 미변경).
+- 다음 루프에 넘길 컨텍스트: record 단계(PR 생성 + `docs/harness-log.md`에 record 기록)가 남음 —
+  orchestrator/ai-worker가 이어감. eval 스크립트의 Windows 콘솔 인코딩 취약점(위 1번 항목)은 T-001
+  범위 밖 기존 결함이라 별도 후속 과제로 남기되, 자동화(CI)에서 exit code를 그대로 신뢰한다면 우선순위
+  있게 다뤄야 함.
+
+## [2026-07-17] ai · T-001 · goal_loop (record)
+- action: verify PASS 이후 record 단계 마감. `docs/traceability.md` FR-017 행을 `in_verify` →
+  `done`으로, `코드/PR` 칸을 `PR #2`로 갱신. `plans/task-001.md` 상태 `in_progress` → `done`,
+  `plans/task-index.md`에 verify 결과(PASS 수치) 반영. `plans/sprint-01.md` 상태 `active` → `done`,
+  DoD 4개 항목 전부 체크, Open Issues의 OQ-006/OQ-010을 해소됨으로 표시(FR-014만 이월). Sprint-01의
+  DoD 4번("verifier FAIL→back_to_action→재시도→PASS")이 계획대로 정확히는 일어나지 않았다는 점
+  (실제로는 code-quality reviewer가 answer_relevancy 스코어러 설계 결함을 잡아 재작업시켰고, verifier
+  공식 판정은 최초 1회에서 바로 PASS)을 `plans/sprint-01.md`에 "정직한 기록"으로 남김 — 완료를
+  과장하지 않는다는 이 프로젝트의 원칙에 따름.
+- record: PR #2 (`ai/T-001-fr-017-faq-rag` → `main`). Sprint-01 종료.
+- 다음 루프에 넘길 컨텍스트: FR-017 하나로 a→b→c 통제 사이클(문제 발견→하네스 승격→자동 재발
+  방지)의 처음 두 단계(a: 구현→검증, b: 문제를 게이트로 승격 — 이번엔 code-quality review가 그 역할)는
+  실증됐다. c(다음에 같은 문제가 생기면 사람 지시 없이 루프가 스스로 재작업)는 아직 실증되지 않았음 —
+  `loops/ai.loop.yaml`의 `trigger: eval.score.regressed` 신호가 실제로 뭔가에 연결되어 있지 않고
+  여전히 문서상의 선언뿐이라, 다음 후속 과제로 "eval 회귀를 실제로 감지해 자동으로 이 loop를 재실행하는
+  메커니즘"이 남아있다. 다음 Sprint 후보: FR-016/018/019/020 중 하나, 또는 이 자동 재실행 메커니즘
+  자체.

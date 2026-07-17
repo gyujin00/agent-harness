@@ -3,7 +3,7 @@
 - Sprint: sprint-01
 - 도메인: ai
 - 실행 loop: loops/ai.loop.yaml
-- 상태: in_progress
+- 상태: done
 - worker: ai-worker (permissions.policy.md 범위 내: `ai/`, `ai/prompts/` 쓰기)
 
 ## 목적
